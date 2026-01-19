@@ -16,7 +16,8 @@ pda_scenario<-wb_load("./excel_files/pda_scenario.xlsx")
 #
 # make the aggregate geometry out of SUPERDISTRICS and pdas
 #
-gis_folder<-"./pda_scenario/shp_files/"
+pda_index<-wb_read(pda_scenario,sheet='index')
+gis_folder<-pda_index$value[1]
 mtc_pdas<-read_sf(dsn = gis_folder, 
               layer = "mtc_pdas")
 pdas<-cut_water_out_of_layer(mtc_pdas,names(mtc_pdas)[1],gis_folder,"pdas",1)
@@ -91,7 +92,6 @@ sdistricts_job <- sum_var_using_fractions(pda_scenario,'sdistricts','suprdistid'
                                                   blkgrp_jobs_22,'C000')
 sdistricts_projections<-merge(sdistricts_hh,sdistricts_job,  by='suprdistid', all=TRUE)
 names(sdistricts_projections)<-c('suprdistid','hh23','jobs22')
-head(sdistricts_projections)
 #
 # get the hh and jobs allocation in 2050
 #
@@ -112,7 +112,7 @@ sum_sf_jobs22<-sdistricts_projections$jobs22[1]+sdistricts_projections$jobs22[2]
 for(i in 1:4){
   sdistricts_projections$hh2050[i]<-sdistricts_projections$hh23[i]*sdistricts_allocation$hh2050[1]/sum_sf_hh23
   sdistricts_projections$jobs2050[i]<-sdistricts_projections$jobs22[i]*sdistricts_allocation$jobs2050[1]/sum_sf_jobs22
-  sdistricts_projections$sdname[i]<-paste("San Fransico ",i)
+  sdistricts_projections$sdname[i]<-paste("San Fransico ",i,sep='')
 }
 sum(sdistricts_projections$hh2050[1:4])
 sum(sdistricts_projections$jobs2050[1:4])
@@ -163,15 +163,14 @@ pdas_projections$hh50_scale<-pdas_projections$jobs50_scale<-NULL
 pda_hh_ratio <- as.numeric(pda_hh_goal)/as.numeric(tot_hhs_pda)
 pda_job_ratio<- as.numeric(pda_job_goal)/as.numeric(tot_job_pda)
 
-
 pdas_projections$hh50_scale <- pdas_projections$hh50*pda_hh_ratio
 pdas_projections$jobs50_scale <- pdas_projections$jobs50*pda_job_ratio
 
 head(pdas_projections)
 tot_hhs_scale_pda<-sum(pdas_projections$hh50_scale) 
 tot_job_scale_pda<-sum(pdas_projections$jobs50_scale)
-print(paste("Just checkin in pdas hh total =",tot_hhs_scale_pda,'and goal =',pda_hh_goal))
-print(paste("Just checkin in pdas job total =",tot_job_scale_pda,'and goal =',pda_job_goal))
+print(paste("Just checking in pdas hh total =",tot_hhs_scale_pda,'and goal =',pda_hh_goal))
+print(paste("Just checking in pdas job total =",tot_job_scale_pda,'and goal =',pda_job_goal))
 #
 # scale up non-pdas areas to match their goals
 #
@@ -227,15 +226,10 @@ names(blkgp_projections)<-c('geoid','hhs23','jobs22')
 blkgp_hh50_ratio <- average_var_using_fractions(pda_scenario,'blkgrps','geoid','agg_geom','obj_id',
                                              agg_projections,'hhr_tot')
 wb_save(pda_scenario,file="./excel_files/pda_scenario.xlsx",overwrite = TRUE)
-hist(agg_projections$hhr_tot)
-hist(blkgp_hh50_ratio$hhr_tot,col='blue',add=TRUE)
-hist(blkgp_hh50_ratio$hhr_tot,col='blue')
 
 blkgp_projections<-merge(blkgp_projections,blkgp_hh50_ratio)
 blkgp_job50_ratio <- average_var_using_fractions(pda_scenario,'blkgrps','geoid','agg_geom','obj_id',
                                              agg_projections,'jobr_tot')
-hist(agg_projections$jobr_tot)
-hist(blkgp_job50_ratio$jobr_tot,col='blue',add=TRUE)
 blkgp_projections<-merge(blkgp_projections,blkgp_job50_ratio)
 blkgp_projections<-merge(blkgp_projections,st_drop_geometry(subset(blkgrps,select = c('geoid','lacres'))))
 blkgp_projections$hhs50<-blkgp_projections$hhs23*blkgp_projections$hhr_tot
@@ -262,19 +256,5 @@ wb_save(pda_scenario,file="./excel_files/pda_scenario.xlsx",overwrite = TRUE)
 # save shape file 
 #
 blkgp_projections_geom<-merge(blkgp_projections,subset(blkgrps,select=c('geoid','geometry')))
-subset(blkgp_projections,!(blkgp_projections$geoid %in% blkgrps$geoid))
-max(blkgp_projections$hhs50)
-
-subset(blkgp_projections,blkgp_projections$hhs50>60000)
-subset(blkgrps,blkgrps$geoid=='060855046021')
-subset(blkgp_projections_geom,blkgp_projections_geom$geoid=='060855046021')
-subset(blkgp_projections,blkgp_projections$geoid=='060855046021')
-error_plot(blkgp_projections_geom$hhs23,blkgp_projections_geom$hhs50)
-error_plot(blkgp_projections_geom$jobs22 ,blkgp_projections_geom$jobs50 )
-sum(blkgp_projections_geom$hhs50)
-sum(blkgp_projections_geom$jobs50)
-total_hh_goal<-4043000
-total_job_goal<-5408000
-
 write_sf(blkgp_projections_geom,paste(gis_folder,"blkgp_projections_geom.shp",sep=''))
 
