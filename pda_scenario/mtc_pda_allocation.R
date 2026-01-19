@@ -132,8 +132,6 @@ agg_geom_hhr <- average_var_using_fractions(pda_scenario,'agg_geom','obj_id','sd
 pda_scenario<-wb_load("./excel_files/pda_scenario.xlsx")
 agg_geom_jobsr <- average_var_using_fractions(pda_scenario,'agg_geom','obj_id','sdistricts','suprdistid',
                                                  sdistricts_projections,'job_rat')
-names(agg_geom_projections)
-head(agg_geom_projections)
 agg_geom_projections$hh_rat<-agg_geom_projections$job_rat<-agg_geom_projections$type<-NULL
 agg_geom_projections<-merge(agg_geom_projections, agg_geom_hhr, by='obj_id', all=T)
 agg_geom_projections<-merge(agg_geom_projections, agg_geom_jobsr, by='obj_id', all=T)
@@ -143,7 +141,6 @@ agg_geom_projections<-merge(agg_geom_projections,
 agg_geom_projections$hh50<-agg_geom_projections$hh23*agg_geom_projections$hh_rat
 agg_geom_projections$jobs50<-agg_geom_projections$jobs22*agg_geom_projections$job_rat
 pdas_projections<-subset(agg_geom_projections,agg_geom_projections$type=='pda')
-head(agg_geom_projections)
 
 tot_hhs_pda<-sum(pdas_projections$hh50) 
 tot_job_pda<-sum(pdas_projections$jobs50)
@@ -216,7 +213,7 @@ wb_save(pda_scenario,file="./excel_files/pda_scenario.xlsx",overwrite = TRUE)
 # save shape file
 #
 agg_proj_geom<-merge(agg_projections,subset(agg_geom,select=c('obj_id','lacres','geometry')))
-write_sf(agg_proj_geom, paste(gis_folder,"agg_proj_geom.shp",sep=''))
+write_sf(agg_proj_geom, paste(gis_folder,"agg_geom.shp",sep=''))
 head(agg_proj_geom)
 #
 # now get blkgrps ratios from agg_geos
@@ -256,5 +253,5 @@ wb_save(pda_scenario,file="./excel_files/pda_scenario.xlsx",overwrite = TRUE)
 # save shape file 
 #
 blkgp_projections_geom<-merge(blkgp_projections,subset(blkgrps,select=c('geoid','geometry')))
-write_sf(blkgp_projections_geom,paste(gis_folder,"blkgp_projections_geom.shp",sep=''))
+write_sf(blkgp_projections_geom,paste(gis_folder,"blkgp_projections.shp",sep=''))
 
