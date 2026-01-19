@@ -1,9 +1,9 @@
 library(openxlsx2)
-library(dplyr)
-library(sf)
-library(DescTools)
-library(rapportools)
-library(tidyr)
+#library(dplyr)
+#library(sf)
+#library(DescTools)
+#library(rapportools)
+#library(tidyr)
 #
 # load in some utility functions
 #
@@ -12,7 +12,6 @@ source("./utilities/ploting_scripts.R")
 #
 # Get the model inputs from the xlsx file
 #
-
 carb_ht_outputs<-wb_load("./excel_files/carb_ht_outputs.xlsx")
 carb_ht_model<-wb_load("./excel_files/carb_ht_model.xlsx")
 pda_scenario<-wb_load("./excel_files/pda_scenario.xlsx")
@@ -49,9 +48,9 @@ for(v in vs){
 #
 # now do the same for the flat case 
 #
-flat_ht<-wb_read(pda_scenario,sheet='ht_base_model')
+flat_ht<-wb_read(pda_scenario,sheet='ht_flat_model')
 names(flat_ht)[1]<-'geoid'
-flat_inputs<-wb_read(pda_scenario,sheet='base_inputs')
+flat_inputs<-wb_read(pda_scenario,sheet='flat_inputs')
 flat_ht<-merge(flat_ht,subset(flat_inputs,select=c('geoid','households','gross_hh_density','emp_gravity10')))
 vs<-names(flat_ht)
 for(v in vs){
