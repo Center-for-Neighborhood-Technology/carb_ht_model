@@ -31,8 +31,11 @@ sacog_counties<-wb_read(gz_scenario,sheet='SACOG_counties')
 
 blkgrps_og<-read_sf(dsn = './tiger/', 
                     layer = "california_blkgrps_2023")
+
 blkgrps_og<-subset(blkgrps_og,blkgrps_og$COUNTYFP %in% sacog_counties$fipco)
-blkgrps<-cut_water_out_of_layer(blkgrps_og,'GEOID',gis_folder,"blkgrps",1)
+blkgrps_og<-subset(blkgrps_og,select=c('GEOID','geometry'))
+names(blkgrps_og)[1]<-'geoid'
+blkgrps<-cut_water_out_of_layer(blkgrps_og,'geoid',gis_folder,"blkgrps",1)
 #
 # read in 2023 block group acs households from census api
 #
