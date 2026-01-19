@@ -131,7 +131,7 @@ if(do_gravity){
   #
   pda_scenario<-add_xls_tab(pda_scenario,'gravity_10_flat',as.data.frame(st_drop_geometry(gravity_10_flat)))
 }
-gravity_10_flat<-wb_read(pda_scenario,sheet='gravity_10_flat')
+gravity_10<-wb_read(pda_scenario,sheet='gravity_10_flat')
 #
 # first save only the measures needed as inputs
 #
@@ -142,10 +142,10 @@ independent_variables<-subset(independent_variables,independent_variables$var_ty
 # now overwrite the gravity measures
 #
 gravity_variables<-subset(independent_variables,independent_variables$variable %like% '%_gravity10%')
-grv_names<-names(gravity_10_flat)
+grv_names<-names(gravity_10)
 ind_names<-independent_variables$variable
 i<-1
-final_gravity<-as.data.frame(gravity_10_flat$geoid)
+final_gravity<-as.data.frame(gravity_10$geoid)
 names(final_gravity)<-'geoid'
 for(i in 1:length(gravity_variables$variable)){
   final_gravity[[gravity_variables$variable[i]]]<-as.numeric(eval(parse(text=(gravity_variables$formula[i]))))
@@ -160,3 +160,4 @@ pda_scenario<-add_xls_tab(pda_scenario,'flat_inputs',flat_inputs)
 wb_save(pda_scenario,file="./excel_files/pda_scenario.xlsx",overwrite = TRUE)
 flat_inputs_geo<-merge(flat_inputs,subset(blkgrps,select=c('geoid','geometry')))
 write_sf(flat_inputs_geo, paste(gis_folder,"model_flat_inputs.shp",sep=''))
+
