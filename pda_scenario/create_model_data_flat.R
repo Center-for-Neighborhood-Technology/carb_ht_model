@@ -1,110 +1,89 @@
-library(dplyr)
-library(sf)
-library(eia)
-library(rapportools)
-library(tidycensus)
 library(DescTools)
-library(units)
 library(openxlsx2)
 #
-# this allocates the new hhs and jobs to the various types
+# This script takes the allocated household and jobs and overwrites 
+#    the independent variables that are affected by these changes for the Flat scenario
 #
-# clear all memory before starting and source the utilities
+# first clear all memory before starting and source the utilities
 #
 rm(list=ls())
 source("./utilities/get_data_functions.R")
 source("./utilities/ploting_scripts.R")
 source("./utilities/overlaps_and_splits.R")
-
 #
 # load in spread sheet needed
 #
 pda_scenario<-wb_load("./excel_files/pda_scenario.xlsx")
 carb_ht_model<-wb_load("./excel_files/carb_ht_model.xlsx")
 #
-# get the blkgrp projections
+# get the path for the gis files needed
 #
-blkgp_projections<-wb_read(pda_scenario,sheet='blkgrp_base_prj')
-error_plot(blkgp_projections$hhs23,blkgp_projections$hhs50,xl='hh23',yl='hh50')
-error_plot(blkgp_projections$jobs22,blkgp_projections$jobs50,xl='jobs22',yl='jobs50')
+pda_index<-wb_read(pda_scenario,sheet='index')
+gis_folder<-pda_index$value[1]
 #
-# get the base fitting inputs
+# get the blkgrp flat projections
 #
-base_inputs<-wb_read(carb_ht_model,sheet='fitting_data')
-names(base_inputs)[1]<-'geoid'
-base_inputs<-subset(base_inputs,select = c('geoid',names(base_inputs)[7:length(names(base_inputs))]))
-base_inputs<-merge(blkgp_projections,base_inputs)
-names(base_inputs)
-length(base_inputs$geoid)
-error_plot(base_inputs$hhs23,base_inputs$hhs50,xl='hh23',yl='hh50')
-error_plot(base_inputs$jobs22,base_inputs$jobs50,xl='jobs22',yl='jobs50')
+blkgp_projections<-wb_read(pda_scenario,sheet='blkgrp_flat_prj')
+#
+# get the flat fitting inputs
+#
+flat_inputs<-wb_read(carb_ht_model,sheet='fitting_data')
+names(flat_inputs)[1]<-'geoid'
+flat_inputs<-subset(flat_inputs,select = c('geoid',names(flat_inputs)[7:length(names(flat_inputs))]))
+flat_inputs<-merge(blkgp_projections,flat_inputs)
 #
 # now start the overwriting variables
 #  first the housing varibles
 #
-base_inputs$households<-base_inputs$hhs50
-base_inputs$gross_hh_density<-base_inputs$hhs50/base_inputs$lacres
-base_inputs$housing_units<-base_inputs$housing_units*base_inputs$hhs50/base_inputs$hhs23
-base_inputs$jobs<-base_inputs$jobs50
-error_plot(base_inputs$hhs23,base_inputs$households,xl='hh23',yl='households')
+flat_inputs$households<-flat_inputs$hhs50
+flat_inputs$gross_hh_density<-flat_inputs$hhs50/flat_inputs$lacres
+flat_inputs$housing_units<-flat_inputs$housing_units*flat_inputs$hhs50/flat_inputs$hhs23
+flat_inputs$jobs<-flat_inputs$jobs50
 #
 # now calc the new AllTransit stats 
 #  this takes forever, so only do it if you have to for the first time.
 #
-blkgrps<-read_sf(dsn = "./tiger/mtc/", 
+blkgrps<-read_sf(dsn = gis_folder, 
                    layer = "blkgrps")
 calc_all_transit_vars=FALSE
 if(calc_all_transit_vars){
+  #
+  # get the transit sheds for mtc
+  #
   tas<-read_sf(dsn = "./tiger/", 
                    layer = "ca_30_min_transit_sheds")
-  
   tas<-subset(tas,tas$geoid %in% blkgrps$geoid )
   names(tas)[1]<-'tas_geoid'
-  write_sf(tas, "./tiger/mtc/tas.shp")
-  names(blkgrps)
-  length(tas$tas_geoid)
-  source("./utilities/overlaps_and_splits.R")
-  tas_base_jobs <- sum_var_using_fractions(pda_scenario,'tas','tas_geoid','blkgrps','geoid',
-                                      base_inputs,'jobs50')
-  pda_scenario<-wb_load("./excel_files/pda_scenario.xlsx")
-  head(tas_base_jobs) 
-  length(tas_base_jobs$tas_geoid)
-  add_xls_tab(pda_scenario,'tas_base_jobs',tas_base_jobs)
-  wb_save(pda_scenario,file="./excel_files/pda_scenario.xlsx",overwrite = TRUE)
+  write_sf(tas, paste(gis_folder,"tas.shp",sep=''))
+  #
+  # sum up the jobs from the block groups to the TAS layer, 
+  #   but don't save the fraction table becuse it is too big
+  #
+  tas_flat_jobs <- sum_var_using_fractions(pda_scenario,'tas','tas_geoid','blkgrps','geoid',
+                                      flat_inputs,'jobs50',0)
+  pda_scenario<-add_xls_tab(pda_scenario,'tas_flat_jobs',tas_flat_jobs)
 }
-tas_base_jobs<-wb_read(pda_scenario,sheet='tas_base_jobs')
-base_inputs$tas_base_jobs<-base_inputs$job_density_tas<-0.0
+tas_flat_jobs<-wb_read(pda_scenario,sheet='tas_flat_jobs')
+flat_inputs$tas_flat_jobs<-flat_inputs$job_density_tas<-0.0
 i<-1
-for(i in 1:length(tas_base_jobs$tas_geoid)){
-  t<-tas_base_jobs[i,]
-  base_inputs[base_inputs$geoid == t$tas_geoid, 'tas_base_jobs'] <- t$jobs50
+for(i in 1:length(tas_flat_jobs$tas_geoid)){
+  t<-tas_flat_jobs[i,]
+  flat_inputs[flat_inputs$geoid == t$tas_geoid, 'tas_flat_jobs'] <- t$jobs50
 }
-base_inputs$job_density_tas<- base_inputs$tas_base_jobs/as.numeric(base_inputs$tas_acres)
-base_inputs[as.numeric(base_inputs$tas_acres) == 0, 'job_density_tas'] <- 0
-error_plot(base_inputs$hhs23,base_inputs$households,xl='hh23',yl='households')
-
-names(base_inputs)
-error_plot(base_inputs$hhs23,base_inputs$households,xl='hh23',yl='households')
+flat_inputs$job_density_tas<- flat_inputs$tas_flat_jobs/as.numeric(flat_inputs$tas_acres)
+flat_inputs[as.numeric(flat_inputs$tas_acres) == 0, 'job_density_tas'] <- 0
 #
 # load the data needed for the gravity measures and 
 #   go from fraction of job type (from the clustering) to number of jobs for gravity calcs.
 #
 do_gravity=FALSE
 if(do_gravity){
-  gravity_measures<-c('households',
-    'frac_rent_hu','frac_sfd','housing_units',
-    "jobs","CNS01","CNS02","CNS03","CNS04","CNS05",                                                                 
-    "CNS06","CNS07","CNS08","CNS09","CNS10",                                                                 
-    "CNS11","CNS12","CNS13","CNS14","CNS15",                                                                 
-    "CNS16","CNS17","CNS18","CNS19","CNS20")
-  for_gravity_calcs<-subset(base_inputs,
+  gravity_measures<-c('households','frac_rent_hu','frac_sfd','housing_units',"jobs")
+  for_gravity_calcs<-subset(flat_inputs,
                             select=c('geoid',gravity_measures))
   for(gv in gravity_measures){
     for_gravity_calcs<-subset(for_gravity_calcs,!is.na(as.numeric(for_gravity_calcs[[gv]])))
     for_gravity_calcs[[gv]]<-as.numeric(for_gravity_calcs[[gv]])
-    if(gv %like% 'CNS%'){
-      for_gravity_calcs[[gv]]<-for_gravity_calcs[[gv]]*for_gravity_calcs$jobs
-    }
   }
   
   names(for_gravity_calcs)[6]<-"C000"
@@ -113,33 +92,28 @@ if(do_gravity){
   #
   # create gravity data frame and order by geoid
   #
-  gravity_10<-st_point_on_surface(blkgrps)
-  order_indices <- order(gravity_10$geoid)
-  gravity_10<-gravity_10[order_indices, ]
-  head(gravity_10)
+  gravity_10_flat<-st_point_on_surface(blkgrps)
+  order_indices <- order(gravity_10_flat$geoid)
+  gravity_10_flat<-gravity_10_flat[order_indices, ]
   #
   # assign center point to data
   #
-  for_gravity_calcs<-merge(for_gravity_calcs,subset(gravity_10,select=c('geoid','geometry')))
+  for_gravity_calcs<-merge(for_gravity_calcs,subset(gravity_10_flat,select=c('geoid','geometry')))
   #
   # define vars to calculate gravity for 
   #
-  gravity_vars<-c('households','renter_occupied_hu','hu_1_detached','housing_units',
-                  "C000","CNS01","CNS02","CNS03","CNS04",
-                  "CNS05","CNS06","CNS07","CNS08","CNS09","CNS10",
-                  "CNS11","CNS12","CNS13","CNS14","CNS15","CNS16",
-                  "CNS17","CNS18","CNS19","CNS20")
+  gravity_vars<-c('households','renter_occupied_hu','hu_1_detached','housing_units',"C000")
   #
   # do the gravity for 10 miles
   #
   for(gv in gravity_vars){
-    gravity_10[[gv]]<-0
+    gravity_10_flat[[gv]]<-0
   }
-  gravity_10<-subset(gravity_10,select=c('geoid',gravity_vars))
-  tst<-gravity_10[1,]
+  gravity_10_flat<-subset(gravity_10_flat,select=c('geoid',gravity_vars))
+  tst<-gravity_10_flat[1,]
   i<-1
-  for(i in 1:length(gravity_10$geoid)){
-    tst<-gravity_10[i,]
+  for(i in 1:length(gravity_10_flat$geoid)){
+    tst<-gravity_10_flat[i,]
     stfid<-tst$geoid
     #
     #  fill the distance in miles
@@ -149,54 +123,40 @@ if(do_gravity){
     sbset10<-subset(for_gravity_calcs,for_gravity_calcs$d<10)
     sbset10$d2<-ifelse(sbset10$d<1,1.0,sbset10$d*sbset10$d)
     for(gv in gravity_vars){
-      gravity_10[i,gv] <- sum(sbset10[[gv]]/sbset10$d2)
+      gravity_10_flat[i,gv] <- sum(sbset10[[gv]]/sbset10$d2)
     }
   }
-  head(gravity_10)
   #
   # save xlsx sheet
   #
-  pda_scenario$remove_worksheet("gravity_10")
-  pda_scenario$add_worksheet("gravity_10")
-  pda_scenario$add_data("gravity_10",as.data.frame(st_drop_geometry(gravity_10)),colNames = TRUE, rowNames = TRUE,)
-  
-  wb_save(pda_scenario,file="./excel_files/pda_scenario.xlsx",overwrite = TRUE)
+  pda_scenario<-add_xls_tab(pda_scenario,'gravity_10_flat',as.data.frame(st_drop_geometry(gravity_10_flat)))
 }
-gravity_10<-wb_read(pda_scenario,sheet='gravity_10')
+gravity_10_flat<-wb_read(pda_scenario,sheet='gravity_10_flat')
 #
 # first save only the measures needed as inputs
 #
 independent_variables<-wb_read(carb_ht_model,sheet='variable_definitions')
 
 independent_variables<-subset(independent_variables,independent_variables$var_type=='independent')
-names(base_inputs)
-head(base_inputs)
-error_plot(base_inputs$hhs23,base_inputs$households,xl='hh23',yl='households')
 #
 # now overwrite the gravity measures
 #
-gravity_variables<-subset(independent_variables,independent_variables$variable %like% '%gravity10%')
-grv_names<-names(gravity_10)
+gravity_variables<-subset(independent_variables,independent_variables$variable %like% '%_gravity10%')
+grv_names<-names(gravity_10_flat)
 ind_names<-independent_variables$variable
 i<-1
-final_gravity<-as.data.frame(gravity_10$geoid)
+final_gravity<-as.data.frame(gravity_10_flat$geoid)
 names(final_gravity)<-'geoid'
 for(i in 1:length(gravity_variables$variable)){
   final_gravity[[gravity_variables$variable[i]]]<-as.numeric(eval(parse(text=(gravity_variables$formula[i]))))
 }
-head(final_gravity)
-head(base_inputs)
 gravity_needs<-c('hh_gravity10','rent_gravity10','sfd_gravity10','emp_gravity10')
-base_inputs[gravity_needs]
+flat_inputs[gravity_needs]
 for(gn in gravity_needs){
-  base_inputs[gn]<-NULL
+  flat_inputs[gn]<-NULL
 }
-base_inputs<-merge(base_inputs,subset(final_gravity,select=c('geoid',gravity_needs)))
-error_plot(base_inputs$hhs23,base_inputs$households,xl='hh23',yl='households')
-names(base_inputs)
-head(base_inputs)
-add_xls_tab(pda_scenario,'base_inputs',base_inputs)
+flat_inputs<-merge(flat_inputs,subset(final_gravity,select=c('geoid',gravity_needs)))
+pda_scenario<-add_xls_tab(pda_scenario,'flat_inputs',flat_inputs)
 wb_save(pda_scenario,file="./excel_files/pda_scenario.xlsx",overwrite = TRUE)
-base_inputs_geo<-merge(base_inputs,subset(blkgrps,select=c('geoid','geometry')))
-st_write(base_inputs_geo, "./tiger/mtc/base_inputs_geo.geojson",append=FALSE, driver = "GeoJSON")
-
+flat_inputs_geo<-merge(flat_inputs,subset(blkgrps,select=c('geoid','geometry')))
+write_sf(flat_inputs_geo, paste(gis_folder,"model_flat_inputs.shp",sep=''))
