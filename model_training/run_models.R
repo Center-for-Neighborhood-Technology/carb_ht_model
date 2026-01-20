@@ -1,7 +1,8 @@
 library(openxlsx2)
-library(dplyr)
+library(sf)
+#library(dplyr)
 library(DescTools)
-library(eia)
+#library(eia)
 #
 # read in the modeling input and output xlsx file
 #
@@ -40,14 +41,17 @@ hhs<-{}
 hhs$options <- c("Local Household",
                  "Typical County Household", 
                  "Typical Metro/Micro/County Household", 
-                 "Typical State Household",
-                 "A HUD Household")
+                 "Typical State Household")
 hhs$prefix<-c('local',
               'county',
               'ami',
-              'state',
-              'hud')
-choice <- menu(hhs$options,title='Choose the household:') 
+              'state')
+choice <- select.list(
+  choices = hhs$options,
+  title = 'Choose the household:',
+  multiple = FALSE ,
+  graphics = TRUE
+)
 hud_inc<-0
 hud_size<-0
 if(choice==5){
@@ -66,7 +70,7 @@ if(choice==5){
 #
 # build the hh inputs into the modeling data
 #
-if(hhs$prefix[choice]=='local'){
+if(choice=='Local Household'){
   modeled<-hts_ind[c("GEOID",hh_vars[,1])]
 } else{
   county_hh_data<-get_county_hh_vars(carb_output,hhs,choice,htd,hud_inc,hud_size)

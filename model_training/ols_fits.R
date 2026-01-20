@@ -1,8 +1,8 @@
-library(car)
+#library(car)
 library(openxlsx2)
-library(insight)
-library(dplyr)
-library(ggplot2)
+#library(insight)
+#library(dplyr)
+#library(ggplot2)
 #
 # clear all memory before starting
 #
@@ -24,7 +24,7 @@ carb_xls<-wb_load("./excel_files/carb_ht_model.xlsx")
 #
 htd <- wb_read(carb_xls,sheet='fitting_data')
 htd[is.na(htd)]<-as.numeric(NA)
-i<-2
+
 for(i in 2:length(names(htd))){
   suppressWarnings(htd[[names(htd)[i]]]<-as.numeric(htd[[names(htd)[i]]]))
 }
@@ -91,7 +91,7 @@ this_data<-subset(htd,eval(parse(text=(sbset$frac_transit_j2w))),select=g) |> na
 # now do the optimization - keeping the household and transit variables
 #
 must_haves<-1:8
-xq<-opt_quasib('frac_transit_j2w',ind_vars$variable,this_data,must_haves)
+xq<-opt_quasib('frac_transit_j2w',ind_vars$variable,this_data,must_haves,1)
 #
 # build and run models
 #
