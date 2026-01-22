@@ -4,6 +4,7 @@ library(sp)
 library(dplyr)
 library(ggplot2)
 library(lehdr)
+library(tigris)
 #
 # read in the whole xlsx file
 #
@@ -24,38 +25,36 @@ data_xls$remove_worksheet("lodes_2022")
 data_xls$add_worksheet("lodes_2022")
 data_xls$add_data("lodes_2022",as.data.frame(lodes_dat),colNames = TRUE, rowNames = TRUE,)
 #
-# open the tiger shape files and get the centroids
+# get the shape files
 #
-blkgrp_shp<-read_sf(dsn = "./tiger", layer = "california_blkgrps_2023")
-blkgrp_shp$gas_region <- NULL
-blkgrp_azcanvor<-do.call("rbind", list(read_sf(dsn = "./tiger", layer = "az_blkgrps_2023"),
-                                       blkgrp_shp,
-                                       read_sf(dsn = "./tiger", layer = "nv_blkgrps_2023"),
-                                       read_sf(dsn = "./tiger", layer = "or_blkgrps_2023")))
+ca_blkgrps<-block_groups('CA',year=2023)
+az_blkgrps<-block_groups('AZ',year=2023)
+nv_blkgrps<-block_groups('NV',year=2023)
+or_blkgrps<-block_groups('OR',year=2023)
+#
+#  merge them 
+#
+blkgrp_azcanvor<-do.call("rbind", list(az_blkgrps,
+                                       ca_blkgrps,
+                                       nv_blkgrps,
+                                       or_blkgrps))
 #
 # Assuming tiger shp is in EPSG:4269 - NAD83 (per Tiger Line file CRS) coordinates
 #   create centroid points from intptlat/lon and add in lodes and acs vars we want to 
 #   measure gravity for.
 #
 blkgrp_azcanvor <- st_as_sf(blkgrp_azcanvor,crs = 4269, remove = FALSE)
-blkgrp_azcanvor$pt<-st_as_sf(as.data.frame(blkgrp_azcanvor),
+blkgrp_azcanvor_pt<-st_as_sf(as.data.frame(blkgrp_azcanvor),
                              coords = c("INTPTLON","INTPTLAT"),
                              crs = 4269, remove = FALSE)
-blkgrp_azcanvor <- left_join(blkgrp_azcanvor,lodes_dat, by=c('GEOID'='w_bg'))
+blkgrp_azcanvor_pt <- left_join(blkgrp_azcanvor_pt,lodes_dat, by=c('GEOID'='w_bg'))
 acs_vars<-subset(as.data.frame(blkgrp_acs_2023),select=c('GEOID','households','occupied_hu','housing_units',
                                                          'renter_occupied_hu','hu_1_detached'))
-blkgrp_azcanvor <- left_join(blkgrp_azcanvor,acs_vars, by=c('GEOID'))
-#
-# create centroid points for California block groups
-#
-blkgrp_shp <- st_as_sf(blkgrp_shp,crs = 4269, remove = FALSE)
-blkgrp_shp$pt<-st_as_sf(as.data.frame(blkgrp_shp),
-                        coords = c("INTPTLON","INTPTLAT"),
-                        crs = 4269, remove = FALSE)
+blkgrp_azcanvor_pt <- left_join(blkgrp_azcanvor_pt,acs_vars, by=c('GEOID'))
 #
 # create gravity data frame and order by GEOID
 #
-gravity<-subset(as.data.frame(blkgrp_shp),select=c('GEOID','COUNTYFP'))
+gravity<-subset(as.data.frame(ca_blkgrps),select=c('GEOID','COUNTYFP'))
 order_indices <- order(gravity$GEOID)
 gravity<-as.data.frame(gravity[order_indices, ])
 #
@@ -68,35 +67,32 @@ gravity_vars<-c('households','renter_occupied_hu','hu_1_detached','housing_units
                 "CNS17","CNS18","CNS19","CNS20")
 #
 # do the gravity for 10 miles
+#   first make sure everything is a double number, not text
 #
-for(g in 1:length(gravity_vars)){
-  blkgrp_azcanvor[[gravity_vars[g]]]<-ifelse(is.na(blkgrp_azcanvor[[gravity_vars[g]]]),
+for(g in gravity_vars){
+  blkgrp_azcanvor_pt[[g]]<-ifelse(is.na(blkgrp_azcanvor_pt[[g]]),
                                              as.double(0),
-                                             as.double(blkgrp_azcanvor[[gravity_vars[g]]]))
-  gravity[[gravity_vars[g]]]<-0
+                                             as.double(blkgrp_azcanvor_pt[[g]]))
+  gravity[[g]]<-0
 }
 cnty=''
 i<-1
 for(i in 1:length(gravity$GEOID)){
   cnty_old=cnty
   cnty=gravity$COUNTYFP[i]
-  if(cnty!=cnty_old){print(paste("Starting county = ",cnty))}
+  if(cnty!=cnty_old){print(paste("Calculating gravity for county = ",cnty))}
   stfid<-gravity$GEOID[i]
-  tst<-subset(blkgrp_azcanvor,blkgrp_azcanvor$GEOID==stfid)
+  tst_pt<-subset(blkgrp_azcanvor_pt,blkgrp_azcanvor_pt$GEOID==stfid)
   #
   #  fill the distance in miles
   #
-  blkgrp_azcanvor$d<-as.double(st_distance( st_transform(tst$pt,3857),
-                                            st_transform(blkgrp_azcanvor$pt,3857)))/1609.34
-  sbset10<-subset(as.data.frame(blkgrp_azcanvor),blkgrp_azcanvor$d<10)
+  blkgrp_azcanvor_pt$d<-as.double(st_distance( st_transform(tst_pt$geometry,3857),
+                                            st_transform(blkgrp_azcanvor_pt$geometry,3857)))/1609.34
+  sbset10<-subset(as.data.frame(blkgrp_azcanvor_pt),blkgrp_azcanvor_pt$d<10)
   sbset10$d2<-ifelse(sbset10$d<1,1.0,sbset10$d*sbset10$d)
-  grv10<-{}
-  grv10$GEOID=stfid
-  grv10$COUNTYFP<-cnty
-  for(g in 1:length(gravity_vars)){
-    grv10[gravity_vars[g]] <- sum(sbset10[[gravity_vars[g]]]/sbset10$d2)
+  for(g in gravity_vars){
+    gravity[i,g] <- sum(sbset10[[g]]/sbset10$d2)
   }
-  gravity[i,]<-as.data.frame(grv10)
 }
 
 data_xls$remove_worksheet("gravity_10")
@@ -105,3 +101,6 @@ data_xls$add_data("gravity_10",as.data.frame(gravity),colNames = TRUE, rowNames 
 
 
 wb_save(data_xls,file="./excel_files/data_prep.xlsx",overwrite = TRUE)
+
+
+
