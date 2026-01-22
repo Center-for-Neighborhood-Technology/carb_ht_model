@@ -101,6 +101,8 @@ data_xls$add_data("gravity_10",as.data.frame(gravity),colNames = TRUE, rowNames 
 
 
 wb_save(data_xls,file="./excel_files/data_prep.xlsx",overwrite = TRUE)
-
-
-
+#
+# save the California block groups, and the points for the four states
+#
+write_sf(ca_blkgrps, "./tiger/ca_blkgrps.shp")
+write_sf(subset(blkgrp_azcanvor_pt,select=c('GEOID','COUNTYFP','geometry')), "./tiger/blkgrp_azcanvor_pt.shp")
