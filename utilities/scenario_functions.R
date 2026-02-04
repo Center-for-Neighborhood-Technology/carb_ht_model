@@ -467,6 +467,7 @@ get_prices<-function(modeled){
   #
   # Now run the cost of each transportation component
   #
+  data_prep<-wb_load("./excel_files/data_prep.xlsx")
   # first get the cost of each
   #  gas prices/electricity/diesel
   # first get the gas price regions assigned to each block group
@@ -548,8 +549,7 @@ get_prices<-function(modeled){
   #
   # now get the average fuel per mile for each fuel - gas, diesel and electricity
   #
-  data_prep<-wb_load("C:/Users/pmh/carb/data_prep.xlsx")
-  vmt_normalization<-as.data.frame(wb_read(data_prep,sheet='vmt_normalization'))
+   vmt_normalization<-as.data.frame(wb_read(data_prep,sheet='vmt_normalization'))
   c<-1
   modeled$gas_mpg_per_frac<-modeled$hybrid_mpg_per_frac<-modeled$diesel_mpg_per_frac<-modeled$ev_mpkwh_per_frac<-modeled$hybrid_mpkwh_per_frac<-0
   for(c in 1:length(vmt_normalization$GEOID)){
