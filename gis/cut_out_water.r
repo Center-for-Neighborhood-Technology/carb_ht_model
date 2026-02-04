@@ -26,7 +26,7 @@ names(counties)
 # get the block groups in from tiger line files
 #
 blkgrps_og<-read_sf(dsn = "./tiger/", 
-                 layer = "california_blkgrps_2023")
+                 layer = "ca_blkgrps")
 blkgrps_og<-subset(blkgrps_og,select=c('GEOID','geometry'))
 names(blkgrps_og)[1]<-'geoid'
 blkgrps_og$county<-substr(blkgrps_og$geoid,1,5)
@@ -44,7 +44,7 @@ blkgrps<-cut_polygons(blkgrps_og,water,'geoid','water_objectid',1)
 # get the new land area and save it
 #
 blkgrps$lacres<-set_units(st_area(blkgrps$geometry),'acre')
-write_sf(blkgrps, "./tiger/blkgrps.shp")
+write_sf(blkgrps, "./gis/blkgrps.shp")
 #
 # get the counties and get area in acres
 #
