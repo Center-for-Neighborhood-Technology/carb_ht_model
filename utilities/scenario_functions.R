@@ -472,10 +472,8 @@ get_prices<-function(modeled){
   #  gas prices/electricity/diesel
   # first get the gas price regions assigned to each block group
   #
-  blkgrp_shp<-read_sf(dsn = "C:/Users/pmh/carb/tiger", layer = "tl_2023_06_bg")
-  names(blkgrp_shp)
-  blkgrp_gas_region<-subset(st_drop_geometry(blkgrp_shp),select=c('GEOID','gas_region'))
-  modeled<-as.data.frame(left_join(modeled,st_drop_geometry(blkgrp_gas_region),by='GEOID'))
+  blkgrp_gas_region<-as.data.frame(wb_read(data_prep,sheet='gas_blkgrp_regions'))
+  modeled<-as.data.frame(left_join(modeled,blkgrp_gas_region,by='GEOID'))
   modeled$gas_region<-toupper(modeled$gas_region)
   head(modeled)
   rm('blkgrp_shp','blkgrp_gas_region')

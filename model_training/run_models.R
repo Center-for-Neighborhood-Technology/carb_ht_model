@@ -1,6 +1,6 @@
 library(openxlsx2)
 library(sf)
-#library(dplyr)
+library(dplyr)
 library(DescTools)
 #library(eia)
 #
@@ -80,7 +80,7 @@ if(choice=='Local Household'){
 
 head(hts_ind)
 
-blkgrp_shp<-read_sf(dsn = "./tiger/", layer = "california_blkgrps_2023")
+blkgrp_shp<-read_sf(dsn = "./tiger/", layer = "ca_blkgrps")
 model_inputs_geo<-merge(hts_ind,subset(blkgrp_shp,select=c('GEOID','geometry')))
 
 st_write(model_inputs_geo, paste("./tiger/",hhs$prefix[choice],"model_inputs_geo.geojson",sep=""),append=FALSE, driver = "GeoJSON")
@@ -121,8 +121,7 @@ head(modeled)
 #  gas prices/electricity/diesel
 # first get the gas price regions assigned to each block group
 #
-names(blkgrp_shp)
-blkgrp_gas_region<-subset(st_drop_geometry(blkgrp_shp),select=c('GEOID','gas_region'))
+blkgrp_gas_region<-as.data.frame(wb_read(data_prep,sheet='gas_blkgrp_regions'))
 modeled<-as.data.frame(left_join(modeled,st_drop_geometry(blkgrp_gas_region),by='GEOID'))
 modeled$gas_region<-toupper(modeled$gas_region)
 head(modeled)
