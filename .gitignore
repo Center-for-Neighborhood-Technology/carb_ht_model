@@ -4,6 +4,7 @@
 .Ruserdata
 .RDataTmp
 tiger/ca_30_min_transit_sheds.*
+tiger/*.geojson
 pda_scenario/shp_files/tas.*
 gis/blkgrps.*
 gis/water.*
