@@ -27,8 +27,8 @@ gzs<-cut_water_out_of_layer(gzs_og,names(gzs_og)[1],gis_folder,"gzs",1)
 #
 sacog_counties<-wb_read(gz_scenario,sheet='SACOG_counties')
 
-blkgrps_og<-read_sf(dsn = './tiger/', 
-                    layer = "california_blkgrps_2023")
+blkgrps_og<-read_sf(dsn = './gis/', 
+                    layer = "blkgrps")
 
 blkgrps_og<-subset(blkgrps_og,blkgrps_og$COUNTYFP %in% sacog_counties$fipco)
 blkgrps_og<-subset(blkgrps_og,select=c('GEOID','geometry'))

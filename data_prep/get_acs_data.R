@@ -31,7 +31,7 @@ for(i in 1:length(vars$acs_var)){
 #
 # read in California block group shape file to get land area etc.
 #
-blkgrp_shp<-read_sf(dsn = "./tiger", layer = "california_blkgrps_2023")
+blkgrp_shp<-read_sf(dsn = "./gis", layer = "blkgrps")
 blkgrp_area<-subset(st_drop_geometry(blkgrp_shp),select=c('GEOID','ALAND'))
 blkgrp_acs_2023<-as.data.frame(left_join(blkgrp_acs_2023,blkgrp_area,by='GEOID'))
 

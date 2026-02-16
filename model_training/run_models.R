@@ -72,7 +72,7 @@ if(choice==5){
 #
 # build the hh inputs into the modeling data
 #
-if(choice=='Local Household'){
+if(choice==1){
   modeled<-hts_ind[c("GEOID",hh_vars[,1])]
 } else{
   county_hh_data<-get_county_hh_vars(carb_output,hhs,choice,htd,hud_inc,hud_size)
