@@ -1,5 +1,7 @@
-library(sf)
-library(tidycensus)
+#
+# get other utilities
+#
+source("./utilities/ht_calculations.R")
 #
 # library of functions useful for running the scenarios
 #
@@ -19,13 +21,15 @@ get_overlap_fractions<-function(xls_file,shape1,shape2,ndx1,ndx2){
   # get the sheet that is needed or create it if it not there
   #
   wrksheet<-get_overlap_fraction_table(xls_file,shape1,shape2)
+  pda_index<-wb_read(pda_scenario,sheet='index')
+  gis_folder<-pda_index$value[1]
   if(wrksheet == 'none'){
     #
     # get shape files
     #
-    shp1<-read_sf(dsn = "C:/Users/pmh/CNT/CNT Team Site - Documents/Urban Analytics/2024 CARB/tiger/mtc", 
+    shp1<-read_sf(dsn = gis_folder, 
                   layer = shape1)
-    shp2<-read_sf(dsn = "C:/Users/pmh/CNT/CNT Team Site - Documents/Urban Analytics/2024 CARB/tiger/mtc", 
+    shp2<-read_sf(dsn = gis_folder, 
                   layer = shape2)
     #
     # now shp1 and shp2 fracs
@@ -36,18 +40,6 @@ get_overlap_fractions<-function(xls_file,shape1,shape2,ndx1,ndx2){
     add_xls_tab(xls_file,wrksheet,fracs)
   }
   wb_read(xls_file,sheet=wrksheet)             
-}
-
-add_xls_tab<-function(xls_file,this_sheet,sheet_data){
-  #
-  # this function add a sheet to the xls_file and returns it
-  #
-  if(this_sheet %in% xls_file$sheet_names){
-    xls_file$remove_worksheet(this_sheet)
-  }
-  xls_file$add_worksheet(this_sheet)
-  xls_file$add_data(paste(this_sheet),as.data.frame(sheet_data),colNames = TRUE)
-  xls_file
 }
 
 allocate_acs_var_using_fractions<-function(xls_file,shape1,ndx1,shape2,ndx2,data_tab,var_name){
@@ -210,7 +202,7 @@ get_county_hh_vars<-function(carb_output,hh_choice,htd,hud_inc=0,hud_size=0){
   county_hh_data<-get_county_acs(hh_census_vars,state)
   if(hh_choice=='ami'){
     cbsa_hh_data<-get_cbsa_acs(hh_census_vars,state)
-    county_shp<-read_sf(dsn = "C:/Users/pmh/carb/tiger", layer = "tl_2023_ca_county")
+    county_shp<-read_sf(dsn = "./tiger", layer = "ca_counties_2023")
     county_shp <- st_drop_geometry(county_shp)
     names(county_shp)
     cnty_cbsa<-as.data.frame(subset(county_shp,county_shp$in_cbsa, select = c(GEOID,cbsa)))
@@ -276,9 +268,9 @@ get_county_acs<-function(hh_census_vars,states){
 #
 get_cbsa_acs<-function(hh_census_vars,state){
   #
-  # the cbsa to county indecies are in the shape file
+  # the cbsa to county indexes are in the shape file
   #
-  county_shp<-read_sf(dsn = "C:/Users/pmh/carb/tiger", layer = "tl_2023_ca_county")
+  county_shp<-read_sf(dsn = "./tiger", layer = "ca_counties_2023")
   county_shp<-st_drop_geometry(county_shp)
   cbsas<-unique(county_shp$cbsa)
   rm(county_shp)
@@ -475,8 +467,7 @@ get_prices<-function(modeled){
   blkgrp_gas_region<-as.data.frame(wb_read(data_prep,sheet='gas_blkgrp_regions'))
   modeled<-as.data.frame(left_join(modeled,blkgrp_gas_region,by='GEOID'))
   modeled$gas_region<-toupper(modeled$gas_region)
-  head(modeled)
-  rm('blkgrp_shp','blkgrp_gas_region')
+  rm('blkgrp_gas_region')
   #
   # get eia directory and metadata it you need it
   #

@@ -1,14 +1,11 @@
-library(openxlsx2)
-library(dplyr)
-library(sf)
-library(DescTools)
-library(rapportools)
+#
+# install and load all the libraries that will be needed
+#
+source("./utilities/manage_packages.R")
 #
 # set the price per mile
 #
 price_per_mile<-0.04
-
-
 #
 # load in some utility functions
 #
@@ -54,10 +51,8 @@ hts_ind["(Intercept)"]<-1.0
 #
 modeled<-hts_ind[c("GEOID",'households',hh_vars[,1],'frac_rent_hu')]
 names(modeled)[1]<-'geoid'
-head(modeled)
-head(hts_ind)
 #
-# eliminate block groups with no households, and with na for housing inputs
+# eliminate block groups with no households and income out of limits, and with na for housing inputs
 #
 modeled<-subset(modeled,modeled$median_hh_income>2499 & modeled$median_hh_income<250000 & modeled$households>0)
 modeled<-subset(modeled,complete.cases(modeled))

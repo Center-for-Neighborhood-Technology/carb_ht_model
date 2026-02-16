@@ -1,5 +1,3 @@
-library(sf)
-library(tidycensus)
 #
 # library of functions useful for running the scenarios
 #
@@ -167,7 +165,6 @@ intersect_polygons<-function(p1,p2,ndx1,ndx2,nm1,nm2){
   #nm1<-shape1
   #nm2<-shape2
   #
-  library(units)
   p2<-st_transform(p2,st_crs(p1))
   p2<-st_set_crs(p2,st_crs(p1))
   p1$geometry<-st_make_valid(p1$geometry)

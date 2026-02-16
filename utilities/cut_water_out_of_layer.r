@@ -1,4 +1,3 @@
-library(units)
 cut_water_out_of_layer<-function(layer_og,ndx,destination,shp_name,verbose=0){
   #
   # get utilities needed

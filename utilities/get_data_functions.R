@@ -1,9 +1,6 @@
-library(sf)
-library(tidycensus)
 #
-# library of functions useful for data from various sources
+# this is a script that is a library of functions useful for data from various sources
 #
-
 get_acs_variable<-function(acs_geo,acs_var,var_name,ndx,yr,st,cnts){
   #
   #
@@ -25,14 +22,15 @@ get_acs_variable<-function(acs_geo,acs_var,var_name,ndx,yr,st,cnts){
 
 get_county_hh_vars<-function(carb_output,hh_choice,htd,hud_inc=0,hud_size=0){
 #
-# read in excel output file that has some data we need and we will store the calculated values in
+# read in excel output file that has some data we need and we will store the 
+#  calculated values in
 #
   hh_census_vars<-wb_read(carb_output,sheet='hh_census_vars')
   state=c("06")
   county_hh_data<-get_county_acs(hh_census_vars,state)
   if(hh_choice=='ami'){
     cbsa_hh_data<-get_cbsa_acs(hh_census_vars,state)
-    county_shp<-read_sf(dsn = "C:/Users/pmh/carb/tiger", layer = "tl_2023_ca_county")
+    county_shp<-read_sf(dsn = "./tiger", layer = "ca_counties_2023")
     county_shp <- st_drop_geometry(county_shp)
     names(county_shp)
     cnty_cbsa<-as.data.frame(subset(county_shp,county_shp$in_cbsa, select = c(GEOID,cbsa)))
@@ -98,9 +96,9 @@ get_county_acs<-function(hh_census_vars,states){
 #
 get_cbsa_acs<-function(hh_census_vars,state){
   #
-  # the cbsa to county indecies are in the shape file
+  # the cbsa to county indexes are in the shape file
   #
-  county_shp<-read_sf(dsn = "C:/Users/pmh/carb/tiger", layer = "tl_2023_ca_county")
+  county_shp<-read_sf(dsn = "./tiger", layer = "ca_counties_2023")
   county_shp<-st_drop_geometry(county_shp)
   cbsas<-unique(county_shp$cbsa)
   rm(county_shp)

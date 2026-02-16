@@ -1,10 +1,3 @@
-library(openxlsx2)
-library(sf)
-library(sp)
-library(dplyr)
-library(ggplot2)
-library(lehdr)
-library(tigris)
 #
 # read in the whole xlsx file
 #

@@ -1,9 +1,3 @@
-library(openxlsx2)
-#library(dplyr)
-#library(sf)
-#library(DescTools)
-#library(rapportools)
-#library(tidyr)
 #
 # load in some utility functions
 #

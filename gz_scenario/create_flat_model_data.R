@@ -1,5 +1,3 @@
-library(openxlsx2)
-library(DescTools)
 #
 # this allocates the new hhs and jobs to the various types
 #

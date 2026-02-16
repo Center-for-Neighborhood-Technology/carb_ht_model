@@ -1,5 +1,3 @@
-library(openxlsx2)
-library(sf)
 #
 # clear all memory before starting
 #

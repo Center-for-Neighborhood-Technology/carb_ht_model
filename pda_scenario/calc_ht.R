@@ -1,7 +1,3 @@
-library(openxlsx2)
-library(dplyr)
-library(sf)
-library(DescTools)
 #
 # clear memory
 #

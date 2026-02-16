@@ -1,5 +1,3 @@
-library(tigris)
-library(sf)
 #
 # clear all memory before starting
 #

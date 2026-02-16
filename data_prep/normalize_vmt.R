@@ -1,8 +1,3 @@
-library(openxlsx2)
-library(tidycensus)
-library(dplyr)
-library(DescTools)
-library(sf)
 #
 # clear all memory before starting
 #

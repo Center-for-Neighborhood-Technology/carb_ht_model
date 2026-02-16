@@ -1,5 +1,3 @@
-library(DescTools)
-library(openxlsx2)
 #
 # This script takes the allocated household and jobs and overwrites 
 #    the independent variables that are affected by these changes for the Flat scenario

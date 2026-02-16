@@ -1,9 +1,3 @@
-library(openxlsx2)
-library(dplyr)
-library(sf)
-library(DescTools)
-library(rapportools)
-library(tidyr)
 rm(list=ls())
 #
 # load in some utility functions
@@ -13,7 +7,6 @@ source("./utilities/ploting_scripts.R")
 #
 # Get the model inputs from the xlsx file
 #
-
 carb_ht_outputs<-wb_load("./excel_files/carb_ht_outputs.xlsx")
 carb_ht_model<-wb_load("./excel_files/carb_ht_model.xlsx")
 gz_scenario<-wb_load("./excel_files/gz_scenario.xlsx")
@@ -25,7 +18,6 @@ scn_inputs<-wb_read(gz_scenario,sheet='model_inputs')
 scn_ht<-merge(scn_ht,subset(scn_inputs,select=c('geoid','households','gross_hh_density','emp_gravity10')))
 vs<-names(scn_ht)
 for(v in vs){
-  print(v)
   if(v != 'geoid'){
     scn_ht<-subset(scn_ht,!(scn_ht[v]=='#N/A'))
     scn_ht[v]<-as.numeric(scn_ht[[v]])
@@ -41,7 +33,6 @@ names(base_inputs)[1]<-'geoid'
 base_ht<-merge(base_ht,subset(base_inputs,select=c('geoid','households','gross_hh_density','emp_gravity10')))
 vs<-names(base_ht)
 for(v in vs){
-  print(v)
   if(v != 'geoid'){
     base_ht<-subset(base_ht,!(base_ht[v]=='#N/A'))
     base_ht[v]<-as.numeric(base_ht[[v]])
@@ -56,7 +47,6 @@ flat_inputs<-wb_read(gz_scenario,sheet='model_flat_inputs')
 flat_ht<-merge(flat_ht,subset(flat_inputs,select=c('geoid','households','gross_hh_density','emp_gravity10')))
 vs<-names(flat_ht)
 for(v in vs){
-  print(v)
   if(v != 'geoid'){
     flat_ht<-subset(flat_ht,!(flat_ht[v]=='#N/A'))
     flat_ht[v]<-as.numeric(flat_ht[[v]])
@@ -73,8 +63,7 @@ plot_ht_results(flat_ht,scn_ht,'Everywhere','Flat')
 #
 # pull out block groups that are at least 90% in a gz
 #
-aggs<-wb_read(gz_scenario,sheet='blkgp_projections')
-names(aggs)
+aggs<-wb_read(gz_scenario,sheet='blkgrp_projections')
 abg<-subset(aggs,aggs$frac>0.75)
 gz_scn_ht<-subset(scn_ht,scn_ht$geoid %in% abg$geoid)
 

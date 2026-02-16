@@ -21,7 +21,6 @@ opt_quasib<-function(dpv,ipvs,dataset,must_haves,verbose=0){
   fit<-glm(f, data = dataset,family='quasibinomial')
   if(verbose>0){print(summary(fit)$coefficients)}
 
-  library(DescTools)
   bad_ids<-c(0)
   good_fits<-length(good_ids)
   j<-0

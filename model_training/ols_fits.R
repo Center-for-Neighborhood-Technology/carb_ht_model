@@ -1,8 +1,3 @@
-#library(car)
-library(openxlsx2)
-#library(insight)
-#library(dplyr)
-#library(ggplot2)
 #
 # clear all memory before starting
 #

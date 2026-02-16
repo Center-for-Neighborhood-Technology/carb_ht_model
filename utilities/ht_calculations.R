@@ -1,6 +1,14 @@
-library(sf)
-library(tidycensus)
-library(eia)
+add_xls_tab<-function(xls_file,this_sheet,sheet_data){
+  #
+  # this function add a sheet to the xls_file and returns it
+  #
+  if(this_sheet %in% xls_file$sheet_names){
+    xls_file$remove_worksheet(this_sheet)
+  }
+  xls_file$add_worksheet(this_sheet)
+  xls_file$add_data(paste(this_sheet),as.data.frame(sheet_data),colNames = TRUE)
+  xls_file
+}
 
 predict_model<-function(dep_vars,hts_ind,modeled,start=1,end=5){
   carb_ht_model<-wb_load("./excel_files/carb_ht_model.xlsx")
@@ -43,14 +51,11 @@ get_prices<-function(modeled){
   #  gas prices/electricity/diesel
   # first get the gas price regions assigned to each block group
   #
-  blkgrp_shp<-read_sf(dsn = "./tiger", layer = "california_blkgrps_2023")
-  names(blkgrp_shp)[5]<-'geoid'
-  names(blkgrp_shp)
-  blkgrp_gas_region<-subset(st_drop_geometry(blkgrp_shp),select=c('geoid','gas_region'))
-  modeled<-as.data.frame(left_join(modeled,st_drop_geometry(blkgrp_gas_region),by='geoid'))
+  blkgrp_gas_region<-as.data.frame(wb_read(data_prep,sheet='gas_blkgrp_regions'))
+  names(blkgrp_gas_region)[1]<-'geoid'
+  modeled<-as.data.frame(left_join(modeled,blkgrp_gas_region,by='geoid'))
   modeled$gas_region<-toupper(modeled$gas_region)
-  head(modeled)
-  rm('blkgrp_shp','blkgrp_gas_region')
+  rm('blkgrp_gas_region')
   #
   # get eia directory and metadata it you need it
   #

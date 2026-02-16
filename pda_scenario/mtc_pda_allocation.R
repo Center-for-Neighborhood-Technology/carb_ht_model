@@ -1,5 +1,3 @@
-library(openxlsx2)
-library(sf)
 #
 # clear all memory before starting
 #
@@ -70,6 +68,7 @@ names(blkgrp_hhs_2023)[1]<-'geoid'
 # read in the jobs for the mtc counties
 #
 lodes_2022<-wb_read(data_prep,sheet='lodes_2022')
+names(lodes_2022)[2]<-'GEOID'
 lodes_2022<-subset(lodes_2022,substring(lodes_2022$GEOID,1,5) %in% paste('06',mtc_counties$fipco,sep=''))
 blkgrp_jobs_22<-subset(lodes_2022, select=c('GEOID','C000'))
 names(blkgrp_jobs_22)[1]<-'geoid'
