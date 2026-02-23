@@ -103,7 +103,12 @@ wb_save(carb_output,file="./excel_files/carb_ht_outputs.xlsx",overwrite = TRUE)
 
 blkgrps<-read_sf(dsn = "./gis/", 
                  layer = "blkgrps")
-modeled<-merge(modeled,subset(blkgrps, select = c('geoid','lacres','geometry')))
+#modeled<-merge(modeled,subset(blkgrps, select = c('geoid','lacres','geometry')))
+
+modeled <- inner_join(modeled,
+                      subset(blkgrps, select = c('GEOID','lacres','geometry')),
+                      by = c("geoid" = "GEOID"))
+
 #
 # save shape file 
 #
