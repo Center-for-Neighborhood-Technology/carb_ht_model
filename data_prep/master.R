@@ -8,7 +8,7 @@ source("./utilities/manage_packages.R")
 #  first get all the block groups and cut out the water, 
 #   only do this once it takes a long time!
 #
-source(".data_prep/get_census_geos.R")
+source("./data_prep/get_census_geos.R")
 #
 #  first get the ACS data
 #

@@ -47,5 +47,5 @@ st_write(water,dsn='./gis/water.shp',delete_dsn=TRUE)
 #
 # save block groups
 #
-blkgrps$lacres<-set_units(st_area(layer$geometry),'acre')
+blkgrps$lacres<-set_units(st_area(blkgrps$geometry),'acre')
 st_write(blkgrps,dsn='./gis/blkgrps.shp')

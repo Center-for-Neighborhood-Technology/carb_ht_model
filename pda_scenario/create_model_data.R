@@ -158,3 +158,6 @@ model_inputs<-merge(model_inputs,subset(final_gravity,select=c('geoid',gravity_n
 pda_scenario<-add_xls_tab(pda_scenario,'model_inputs',model_inputs)
 wb_save(pda_scenario,file="./excel_files/pda_scenario.xlsx",overwrite = TRUE)
 model_inputs_geo<-merge(model_inputs,subset(blkgrps,select=c('geoid','geometry')))
+write_sf(model_inputs_geo, paste(gis_folder,"model_inputs.geojson",sep=''),
+         append = FALSE,
+         delete_dsn = TRUE)

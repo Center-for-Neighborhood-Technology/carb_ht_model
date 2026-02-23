@@ -6,6 +6,7 @@ rm(list=ls())
 # load some utilities
 #
 source("./utilities/ht_calculations.R")
+source("./utilities/get_data_functions.R")
 #
 # read in the modeling input and output xlsx file
 #
