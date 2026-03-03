@@ -1,7 +1,15 @@
 #
+# clear memory
+#
+rm(list=ls())
+#
 # install and load all the libraries that will be needed
 #
 source("./utilities/manage_packages.R")
+#
+# suppress warnings
+#
+options(warn = -1)
 #
 # set the price per mile
 #
@@ -221,4 +229,7 @@ road_price_scn$add_worksheet(this_sheet)
 road_price_scn$add_data(paste(this_sheet),as.data.frame(modeled),colNames = TRUE)
 
 wb_save(road_price_scn,file="./excel_files/road_pricing_scenario.xlsx",overwrite = TRUE)
-
+#
+# restore warnings
+#
+options(warn = 0)
