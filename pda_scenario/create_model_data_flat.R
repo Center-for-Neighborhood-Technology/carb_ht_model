@@ -51,7 +51,7 @@ if(calc_all_transit_vars){
   tas<-st_read("./gis/ca_30_min_transit_sheds.gpkg")
   tas<-subset(tas,tas$geoid %in% blkgrps$geoid )
   names(tas)[1]<-'tas_geoid'
-  write_sf(tas, paste(gis_folder,"tas.shp",sep=''))
+  write_sf(tas, paste(gis_folder,"tas.gpkg",sep=''))
   #
   # sum up the jobs from the block groups to the TAS layer, 
   #   but don't save the fraction table becuse it is too big

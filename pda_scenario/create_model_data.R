@@ -54,7 +54,7 @@ if(calc_all_transit_vars){
   #
   # save this shape file so we can do a proportional sum against it.
   #
-  write_sf(tas, paste(gis_folder,"tas.shp",sep=''))
+  write_sf(tas, paste(gis_folder,"tas.gpkg",sep=''))
   #
   # sum up the jobs from the block groups to the TAS layer, 
   #   but don't save the fraction table becuse it is too big
@@ -157,6 +157,6 @@ model_inputs<-merge(model_inputs,subset(final_gravity,select=c('geoid',gravity_n
 pda_scenario<-add_xls_tab(pda_scenario,'model_inputs',model_inputs)
 wb_save(pda_scenario,file="./excel_files/pda_scenario.xlsx",overwrite = TRUE)
 model_inputs_geo<-merge(model_inputs,subset(blkgrps,select=c('geoid','geometry')))
-write_sf(model_inputs_geo, paste(gis_folder,"model_inputs.geojson",sep=''),
+write_sf(model_inputs_geo, paste(gis_folder,"model_inputs.gpkg",sep=''),
          append = FALSE,
          delete_dsn = TRUE)

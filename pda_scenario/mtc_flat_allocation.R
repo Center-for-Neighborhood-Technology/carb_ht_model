@@ -72,4 +72,4 @@ wb_save(pda_scenario,file="./excel_files/pda_scenario.xlsx",overwrite = TRUE)
 # save shape file
 #
 blkgrp_flat_prj_geom<-merge(blkgrp_flat_prj,subset(blkgrps,select=c('geoid','geometry')))
-write_sf(blkgrp_flat_prj_geom,paste(gis_folder,"blkgrp_flat_prj_geom.shp",sep=''))
+write_sf(blkgrp_flat_prj_geom,paste(gis_folder,"blkgrp_flat_prj_geom.gpkg",sep=''))

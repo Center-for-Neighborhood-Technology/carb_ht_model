@@ -71,4 +71,4 @@ wb_save(pda_scenario,file="./excel_files/pda_scenario.xlsx",overwrite = TRUE)
 blkgrps<-read_sf(dsn = gis_folder, 
                  layer = "blkgrps")
 ht_flat_model<-merge(ht_flat_model,subset(blkgrps, select = c('geoid','geometry')))
-write_sf(ht_flat_model, paste(gis_folder,"ht_flat_model.shp",sep=''))
+write_sf(ht_flat_model, paste(gis_folder,"ht_flat_model.gpkg",sep=''))

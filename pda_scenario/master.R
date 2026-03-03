@@ -35,3 +35,6 @@ source("./pda_scenario/calc_flat_ht.R")
 # finally there is a first take on analyzing these data
 #
 source("./pda_scenario/analysis.R")
+#
+options(warn = 0)
+

@@ -54,7 +54,7 @@ agg_geom <- rbind(subset(agg_geom,select=c("obj_id","lacres","type","geometry"))
 #
 # save shape file
 #
-write_sf(agg_geom,paste(gis_folder,"agg_geom.shp",sep=''))
+write_sf(agg_geom,paste(gis_folder,"agg_geom.gpkg",sep=''))
 #
 # read in the mtc counties
 #
@@ -212,7 +212,7 @@ wb_save(pda_scenario,file="./excel_files/pda_scenario.xlsx",overwrite = TRUE)
 # save shape file
 #
 agg_proj_geom<-merge(agg_projections,subset(agg_geom,select=c('obj_id','lacres','geometry')))
-write_sf(agg_proj_geom, paste(gis_folder,"agg_geom.shp",sep=''))
+write_sf(agg_proj_geom, paste(gis_folder,"agg_geom.gpkg",sep=''))
 head(agg_proj_geom)
 #
 # now get blkgrps ratios from agg_geos
@@ -252,5 +252,5 @@ wb_save(pda_scenario,file="./excel_files/pda_scenario.xlsx",overwrite = TRUE)
 # save shape file 
 #
 blkgp_projections_geom<-merge(blkgp_projections,subset(blkgrps,select=c('geoid','geometry')))
-write_sf(blkgp_projections_geom,paste(gis_folder,"blkgp_projections.shp",sep=''))
+write_sf(blkgp_projections_geom,paste(gis_folder,"blkgp_projections.gpkg",sep=''))
 
