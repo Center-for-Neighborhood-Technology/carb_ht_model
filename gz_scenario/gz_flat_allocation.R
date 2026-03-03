@@ -21,9 +21,8 @@ gis_folder<-index$value[1]
 #
 sacog_counties<-wb_read(gz_scenario,sheet='SACOG_counties')
 
-blkgrps_og<-read_sf(dsn = './gis/', 
-                    layer = "blkgrps")
-blkgrps_og<-subset(blkgrps_og,blkgrps_og$COUNTYFP %in% sacog_counties$fipco)
+blkgrps_og<-read_sf(dsn = "./gis/blkgrps.gpkg")
+blkgrps_og<-subset(blkgrps_og,substring(blkgrps_og$GEOID,3,5) %in% sacog_counties$fipco)
 blkgrps<-cut_water_out_of_layer(blkgrps_og,'GEOID',gis_folder,"blkgrps",1)
 #
 # read in 2023 block group acs households from census api
@@ -34,8 +33,8 @@ names(blkgrp_hhs_2023)[1]<-'geoid'
 # read in the jobs for the block groups in the sacog counties
 #
 lodes_2022<-wb_read(data_prep,sheet='lodes_2022')
-lodes_2022<-subset(lodes_2022,substring(lodes_2022$GEOID,1,5) %in% paste('06',sacog_counties$fipco,sep=''))
-blkgrp_jobs_22<-subset(lodes_2022, select=c('GEOID','C000'))
+lodes_2022<-subset(lodes_2022,substring(lodes_2022$w_bg,1,5) %in% paste('06',sacog_counties$fipco,sep=''))
+blkgrp_jobs_22<-subset(lodes_2022, select=c('w_bg','C000'))
 names(blkgrp_jobs_22)[1]<-'geoid'
 blkgrp_projections<-merge(blkgrp_hhs_2023,blkgrp_jobs_22)
 names(blkgrp_projections)<-c('geoid','hhs23','jobs22')

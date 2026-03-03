@@ -72,7 +72,7 @@ blkgrps<-read_sf(dsn = gis_folder,
                  layer = "blkgrps")
 
 ht_model<-merge(ht_model,subset(blkgrps, select = c('geoid','geometry')))
-write_sf(ht_model, paste(gis_folder,"ht_flat_model.shp",sep=''))
+write_sf(ht_model, paste(gis_folder,"ht_flat_model.gpkg",sep=''),delete_dsn=TRUE)
 
 
 

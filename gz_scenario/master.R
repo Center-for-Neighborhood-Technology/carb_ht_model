@@ -1,4 +1,9 @@
 #
+# this script is helps you run all the scripts to run MTC PDA Growth scenario
+#  suppress warnings
+#
+options(warn = -1)
+#
 # install and load all the libraries that will be needed
 #
 source("./utilities/manage_packages.R")
@@ -31,3 +36,7 @@ source("./pda_scenario/calc_flat_ht.R")
 # finally there is a first take on analyzing these data
 #
 source("./pda_scenario/analysis.R")
+#
+# turn warning back on
+#
+options(warn = 0)

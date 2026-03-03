@@ -61,8 +61,8 @@ if(calc_all_transit_vars){
   # save this shape file so we can do a proportional sum against it.
   #
   names(tas)[1]<-'tas_geoid'
-  tas_shp<-paste(gis_folder,'tas.shp',sep='')
-  write_sf(tas, tas_shp)
+  tas_shp<-paste(gis_folder,'tas.gpkg',sep='')
+  st_write(tas, tas_shp)
   #
   # sum up the jobs from the block groups to the TAS layer, 
   #   but don't save the fraction table because it is too big
@@ -175,4 +175,5 @@ wb_save(gz_scenario,file="./excel_files/gz_scenario.xlsx",overwrite = TRUE)
 # save shape file
 #
 model_inputs_geo<-merge(model_inputs,subset(blkgrps,select=c('geoid','geometry')))
-write_sf(model_inputs_geo,paste(gis_folder,"model_inputs.shp",sep=''))
+write_sf(model_inputs_geo,paste(gis_folder,"model_inputs.gpkg",sep=''))
+

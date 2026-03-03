@@ -49,7 +49,7 @@ model_inputs$jobs<-model_inputs$jobs50
 # now calc the new AllTransit stats 
 #  this takes forever, so only do it if you have to for the first time.
 #
-calc_all_transit_vars=TRUE
+calc_all_transit_vars=FALSE
 if(calc_all_transit_vars){
   #
   # get the transit sheds for SACOG
@@ -172,4 +172,4 @@ wb_save(gz_scenario,file="./excel_files/gz_scenario.xlsx",overwrite = TRUE)
 # save shape file
 #
 model_inputs_geo<-merge(model_inputs,subset(blkgrps,select=c('geoid','geometry')))
-write_sf(model_inputs_geo,paste(gis_folder,"model_flat_inputs.shp",sep=''))
+st_write(model_inputs_geo,paste(gis_folder,"model_flat_inputs.gpkg",sep=''),delete_dsn=TRUE)
