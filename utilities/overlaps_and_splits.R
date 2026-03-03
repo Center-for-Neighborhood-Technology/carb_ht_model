@@ -191,69 +191,6 @@ intersect_polygons<-function(p1,p2,ndx1,ndx2,nm1,nm2){
   p1_p2_intersecting
 }
 
-
-cut_polygons<-function(polygons,cutters,ndx,cut_ndx,plt_lvl=1){
-  #
-  # this function cuts out areas that are in the cutters layer, out of the polygons layer
-  #     polygons - layer to be cut and then returned
-  #     cutters - layer to cut with
-  #     ndx - index into polygons 
-  #     cut_ndx - index into cutters
-  #     plt_lvl - level of plotting you want to see as this goes throught he polygons.
-  #
-  # As an example polygons = block groups and cutter = water in order to remove the water area from the block groups.
-  #polygons<-blkgrps_og
-  #cutters<-water
-  #ndx<-'geoid'
-  #cut_ndx<-'water_objectid'
-  #plt_lvl=2
-  
-  cutters<-st_transform(cutters,st_crs(polygons))
-  cutters<-st_set_crs(cutters,st_crs(polygons))
-  ints<-st_join(polygons, cutters, join = st_intersects)
-  # plot(ints$geometry, col='blue')
-  ints<-subset(ints,!is.na(ints[[cut_ndx]]))
-  ints_ndxs<-unique(ints[[ndx]])
-  cnt<-length(polygons[[ndx]])
-  j<-735
-  for(j in 1:cnt){
-    this_ndx<-polygons[[ndx]][j]
-    if(this_ndx %in% ints_ndxs){
-      i <- which(ints_ndxs == this_ndx)
-      print(paste('number ',j,'out of ',cnt,' this_ndx=',this_ndx))
-      this_plyg<-subset(polygons,polygons[[ndx]]==this_ndx)
-      if(st_geometry_type(this_plyg$geometry)=='MULTIPOLYGON' || 
-         st_geometry_type(this_plyg$geometry)=='POLYGON'){
-        zz<-subset(ints,ints[[ndx]] == this_ndx)
-        xx<-st_make_valid(this_plyg$geometry)
-        ww<-st_make_valid(subset(cutters,cutters[[cut_ndx]] %in% zz[[cut_ndx]]))
-        ww<-st_make_valid(subset(ww,st_geometry_type(ww$geometry) %in% c('MULTIPOLYGON','POLYGON')))
-        yy<-st_make_valid(st_union(ww$geometry))
-        qq<-st_make_valid(st_difference(xx,yy))
-        qq<-subset(qq,st_geometry_type(qq)=='MULTIPOLYGON' | st_geometry_type(qq)=='POLYGON')
-        if(length(qq)>0){
-          #            print(c('qq length=',length(qq)))
-          xx<-qq
-          if(plt_lvl==2){
-            print(paste('polygon type=',st_geometry_type(xx),'this cut type=',st_geometry_type(yy[k])))
-            plot(ww$geometry[k],col = "red", border = "green")
-            plot(yy[k],col = "brown", border = "black", add=TRUE)
-            plot(xx,col = "pink", border = "blue")
-            plot(yy[k],col = "brown", border = "black", add=TRUE)
-          }
-          polygons$geometry[j] <-st_make_valid(xx)
-          if(plt_lvl!=0){
-            plot(this_plyg$geometry,col = "blue", border = "lightgreen")
-            plot(st_make_valid(polygons$geometry[j]),col = "red", border = "lightgreen", add=TRUE)
-          }
-        }
-      }
-    }
-  }
-  polygons
-}
-
-
 add_xls_tab<-function(xls_file,this_sheet,sheet_data){
   #
   # this function add a sheet to the xls_file and returns it
@@ -270,4 +207,28 @@ add_xls_tab<-function(xls_file,this_sheet,sheet_data){
   xls_file$add_worksheet(this_sheet)
   xls_file$add_data(paste(this_sheet),as.data.frame(sheet_data),colNames = TRUE)
   xls_file
+}
+
+cut_polygons_rmapshaper <- function(polygons, cutters) {
+  require("rmapshaper")
+  
+  # 1. Align Coordinate Reference Systems (CRS)
+  if (st_crs(polygons) != st_crs(cutters)) {
+    cutters <- st_transform(cutters, st_crs(polygons))
+  }
+  
+  # 2. Fix invalid geometries 
+  polygons <- st_make_valid(polygons)
+  cutters <- st_make_valid(cutters)
+  
+  # 3. Combine the water polygons into a single mask [st_union is a big bottleneck!]
+  cutters_combined <- ms_dissolve(cutters)
+  
+  # 4. Use ms_erase to punch out the water
+  result <- ms_erase(target = polygons, erase = cutters_combined)
+  
+  # 5. Fix invalid geometries that result from the cutting
+  result <- st_make_valid(result)
+  
+  return(result)
 }

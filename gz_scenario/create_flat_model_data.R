@@ -54,8 +54,7 @@ if(calc_all_transit_vars){
   #
   # get the transit sheds for SACOG
   #
-  tas<-read_sf(dsn = "./tiger/", 
-               layer = "ca_30_min_transit_sheds")
+  tas<-st_read("./gis/ca_30_min_transit_sheds.gpkg")
   tas<-subset(tas,tas$geoid %in% blkgrps$geoid )
   #
   # save this shape file so we can do a proportional sum against it.

@@ -89,6 +89,7 @@ modeled$frac_rent_hu<-htd$frac_rent_hu
 #
 modeled<-predict_model(dep_vars,hts_ind,modeled,start=1,end=5)
 names(modeled)[1]<-'geoid'
+mold<-modeled
 #
 # Now run the cost of each transportation component and the H, T and H+T
 #

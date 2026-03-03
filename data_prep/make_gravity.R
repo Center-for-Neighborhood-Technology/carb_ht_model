@@ -18,28 +18,37 @@ data_xls$remove_worksheet("lodes_2022")
 data_xls$add_worksheet("lodes_2022")
 data_xls$add_data("lodes_2022",as.data.frame(lodes_dat),colNames = TRUE, rowNames = TRUE,)
 #
-# get the shape files
+# this only has to be run once
 #
-ca_blkgrps<-block_groups('CA',year=2023)
-az_blkgrps<-block_groups('AZ',year=2023)
-nv_blkgrps<-block_groups('NV',year=2023)
-or_blkgrps<-block_groups('OR',year=2023)
-#
-#  merge them 
-#
-blkgrp_azcanvor<-do.call("rbind", list(az_blkgrps,
-                                       ca_blkgrps,
-                                       nv_blkgrps,
-                                       or_blkgrps))
-#
-# Assuming tiger shp is in EPSG:4269 - NAD83 (per Tiger Line file CRS) coordinates
-#   create centroid points from intptlat/lon and add in lodes and acs vars we want to 
-#   measure gravity for.
-#
-blkgrp_azcanvor <- st_as_sf(blkgrp_azcanvor,crs = 4269, remove = FALSE)
-blkgrp_azcanvor_pt<-st_as_sf(as.data.frame(blkgrp_azcanvor),
-                             coords = c("INTPTLON","INTPTLAT"),
-                             crs = 4269, remove = FALSE)
+make_pt_data<-FALSE
+if(make_pt_data){
+  #
+  # get the shape files
+  #
+  ca_blkgrps<-block_groups('CA',year=2023)
+  az_blkgrps<-block_groups('AZ',year=2023)
+  nv_blkgrps<-block_groups('NV',year=2023)
+  or_blkgrps<-block_groups('OR',year=2023)
+  #
+  #  merge them 
+  #
+  blkgrp_azcanvor<-do.call("rbind", list(az_blkgrps,
+                                         ca_blkgrps,
+                                         nv_blkgrps,
+                                         or_blkgrps))
+  #
+  # Assuming tiger shp is in EPSG:4269 - NAD83 (per Tiger Line file CRS) coordinates
+  #   create centroid points from intptlat/lon and add in lodes and acs vars we want to 
+  #   measure gravity for.
+  #
+  blkgrp_azcanvor <- st_as_sf(blkgrp_azcanvor,crs = 4269, remove = FALSE)
+  blkgrp_azcanvor_pt<-st_as_sf(as.data.frame(blkgrp_azcanvor),
+                               coords = c("INTPTLON","INTPTLAT"),
+                               crs = 4269, remove = FALSE)
+} else{
+  blkgrp_azcanvor_pt<-st_read("./gis/blkgrp_azcanvor_pt.gpkg")
+  st_geometry(blkgrp_azcanvor_pt) <-'geometry'
+}
 blkgrp_azcanvor_pt <- left_join(blkgrp_azcanvor_pt,lodes_dat, by=c('GEOID'='w_bg'))
 acs_vars<-subset(as.data.frame(blkgrp_acs_2023),select=c('GEOID','households','occupied_hu','housing_units',
                                                          'renter_occupied_hu','hu_1_detached'))
@@ -47,7 +56,9 @@ blkgrp_azcanvor_pt <- left_join(blkgrp_azcanvor_pt,acs_vars, by=c('GEOID'))
 #
 # create gravity data frame and order by GEOID
 #
-gravity<-subset(as.data.frame(ca_blkgrps),select=c('GEOID','COUNTYFP'))
+gravity<-subset(as.data.frame(st_drop_geometry(blkgrp_azcanvor_pt)),
+                        blkgrp_azcanvor_pt$GEOID %like% '06%',
+                        select=c('GEOID','COUNTYFP'))
 order_indices <- order(gravity$GEOID)
 gravity<-as.data.frame(gravity[order_indices, ])
 #
@@ -68,6 +79,7 @@ for(g in gravity_vars){
                                              as.double(blkgrp_azcanvor_pt[[g]]))
   gravity[[g]]<-0
 }
+
 cnty=''
 i<-1
 for(i in 1:length(gravity$GEOID)){
@@ -97,5 +109,4 @@ wb_save(data_xls,file="./excel_files/data_prep.xlsx",overwrite = TRUE)
 #
 # save the California block groups, and the points for the four states
 #
-write_sf(ca_blkgrps, "./tiger/ca_blkgrps.shp")
-write_sf(subset(blkgrp_azcanvor_pt,select=c('GEOID','COUNTYFP','geometry')), "./tiger/blkgrp_azcanvor_pt.shp")
+write_sf(subset(blkgrp_azcanvor_pt,select=c('GEOID','COUNTYFP','geometry')), "./gis/blkgrp_azcanvor_pt.gpkg")

@@ -77,7 +77,7 @@ if(make_plots){
   o + scale_y_log10() + labs(title = "Other TCI Histogram", x="Other TCI", y = "Frequency (Log10 Scale)")
 }
 #
-# find optimum fit for transit because it is a quasibinomial there can be varialbes the drive the fit 
+# find optimum fit for transit because it is a quasibinomial there can be variables the drive the fit 
 #  into a range the does not work.
 #
 g<-c(ind_vars$variable,'frac_transit_j2w')

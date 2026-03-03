@@ -27,7 +27,7 @@ cut_water_out_of_layer<-function(layer_og,ndx,destination,shp_name,verbose=0){
     # cut water out of layer
     #
     layer_og<-st_transform(layer_og, crs = 4326)
-    layer<-cut_polygons(layer_og,water,ndx,'water_objectid',verbose)
+    layer<-cut_polygons_rmapshaper(layer_og,water)
     #
     # get the new land area and save it
     #

@@ -86,11 +86,11 @@ get_prices<-function(modeled){
   #
   # now get diesel prices in California - for now there is only one???
   #
-  diesel_prices<-eia_data(dir='petroleum/pri/gnd',  data = "value",
+  diesel_prices<-as.data.frame(eia_data(dir='petroleum/pri/gnd',  data = "value",
                           facets = list(product='EPD2D',duoarea=c('SCA')),
                           freq = "annual",
-                          start = "2023",end="2024",
-                          sort = list(cols = "duoarea", order = "asc"),)
+                          start = "2023",end="2023",
+                          sort = list(cols = "duoarea", order = "asc"),))
   modeled$diesel_price<-as.numeric(diesel_prices$value)
   rm(diesel_prices)
   #

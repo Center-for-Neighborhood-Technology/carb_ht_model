@@ -50,7 +50,7 @@ emfac_vmt <- wb_read(input_data,sheet='emfac_county_vmt',start_row = 9 )
 #
 # get county names and GEOID from tiger shape file
 #
-counties_shp<-read_sf(dsn = "./tiger", layer = "ca_counties_2023")
+counties_shp<-st_read("./gis/counties.gpkg")
 ca_counties<-subset(st_drop_geometry(counties_shp),select=c('GEOID','NAME'))
 names(ca_counties)<-c('GEOID','Region')
 emfac_vmt<-as.data.frame(left_join(ca_counties,emfac_vmt,by='Region'))

@@ -30,7 +30,7 @@ blkgrps<-cut_water_out_of_layer(mtc_blkgrps,'geoid',gis_folder,"blkgrps",1)
 #
 # cut out pdas from SUPERDISTRICS
 #
-agg_geom<-cut_polygons(sdistricts,pdas,'suprdistid','joinkey')
+agg_geom<-cut_polygons_rmapshaper(sdistricts,pdas)
 #
 # get the columns in sync
 #

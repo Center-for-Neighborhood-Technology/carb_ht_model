@@ -60,8 +60,6 @@ allocate_acs_var_using_fractions<-function(xls_file,shape1,ndx1,shape2,ndx2,data
   agg_data
 }
 
-
-
 get_acs_variable<-function(acs_geo,acs_var,var_name,ndx,yr,st,cnts){
   #
   #
@@ -81,8 +79,6 @@ get_acs_variable<-function(acs_geo,acs_var,var_name,ndx,yr,st,cnts){
   acs_data<-subset(acs_data,select=c(ndx,var_name))
   acs_data
   }
-
-
 
 intersect_polygons<-function(p1,p2,ndx1,ndx2,nm1,nm2){
   #
@@ -133,66 +129,6 @@ intersect_polygons<-function(p1,p2,ndx1,ndx2,nm1,nm2){
   p1_p2_intersecting
 }
 
-
-
-
-
-cut_polygons<-function(polygons,cutters,ndx,cut_ndx,plt_lvl){
-#
-# this function cuts out areas that are in the cutters layer, out of the polygons layer
-#     polygons - layer to be cut and then returned
-#     cutters - layer to cut with
-#     ndx - index into polygons 
-#     cut_ndx - index into cutters
-#     plt_lvl - level of plotting you want to see as this goes throught he polygons.
-#
-# As an example polygons = block groups and cutter = water in order to remove the water area from the block groups.
-#  polygons<-blkgrpsf
-#  cutters<-water
-#  ndx<-'geoid'
-#  cut_ndx<-'water_objectid'
-#
-  ints<-st_join(polygons, cutters, join = st_intersects)
-  ints<-subset(ints,!is.na(ints[[cut_ndx]]))
-  ints_ndxs<-unique(ints[[ndx]])
-  cnt<-length(polygons[[ndx]])
-  i<-20
-  for(i in 1:cnt){
-    this_ndx<-polygons[[ndx]][i]
-    if(this_ndx %in% ints_ndxs){
-      print(paste('number ',i,'out of ',cnt,' this_ndx=',this_ndx))
-      this_plyg<-subset(polygons,polygons[[ndx]]==this_ndx)
-      if(st_geometry_type(this_plyg$geometry)=='MULTIPOLYGON'){
-        zz<-subset(ints,ints[[ndx]] == this_ndx)
-        xx<-this_plyg$geometry
-        ww<-subset(cutters,cutters[[cut_ndx]] %in% zz[[cut_ndx]])
-        yy<-st_intersection(this_plyg$geometry, 
-                            ww$geometry)
-        yy
-        for(k in 1:length(yy)){
-          xx<-st_difference(st_make_valid(xx),st_make_valid(yy[k]))
-          xx<-subset(xx,st_geometry_type(xx)=='MULTIPOLYGON' | st_geometry_type(xx)=='POLYGON')
-          if(plt_lvl==2){
-            print(paste('polygon type=',st_geometry_type(xx),'this cut type=',st_geometry_type(yy[k])))
-            plot(xx,col = "pink", border = "blue")
-          }
-        }
-        polygons$geometry[i] <-st_make_valid(xx)
-        if(plt_lvl!=0){
-          plot(this_plyg$geometry,col = "blue", border = "lightgreen")
-          plot(polygons$geometry[i],col = "red", border = "lightgreen", add=TRUE)
-        }
-      }
-    }
-  }
-  polygons
-}
-
-
-
-
-
-
 get_county_hh_vars<-function(carb_output,hh_choice,htd,hud_inc=0,hud_size=0){
 #
 # read in excel output file that has some data we need and we will store the calculated values in
@@ -202,10 +138,10 @@ get_county_hh_vars<-function(carb_output,hh_choice,htd,hud_inc=0,hud_size=0){
   county_hh_data<-get_county_acs(hh_census_vars,state)
   if(hh_choice=='ami'){
     cbsa_hh_data<-get_cbsa_acs(hh_census_vars,state)
-    county_shp<-read_sf(dsn = "./tiger", layer = "ca_counties_2023")
-    county_shp <- st_drop_geometry(county_shp)
-    names(county_shp)
-    cnty_cbsa<-as.data.frame(subset(county_shp,county_shp$in_cbsa, select = c(GEOID,cbsa)))
+    county_gpkg<-st_read(dsn = "./gis/counties.gpkg")
+    county_gpkg <- st_drop_geometry(county_gpkg)
+    names(county_gpkg)
+    cnty_cbsa<-as.data.frame(subset(county_gpkg,county_gpkg$in_cbsa, select = c(GEOID,cbsa)))
     cbsas<-unique(cnty_cbsa$cbsa)
     for(c in 1:length(cbsas)){
       this_cbsa<-cbsas[c]
@@ -270,10 +206,10 @@ get_cbsa_acs<-function(hh_census_vars,state){
   #
   # the cbsa to county indexes are in the shape file
   #
-  county_shp<-read_sf(dsn = "./tiger", layer = "ca_counties_2023")
-  county_shp<-st_drop_geometry(county_shp)
-  cbsas<-unique(county_shp$cbsa)
-  rm(county_shp)
+  county_gpkg<-st_read(dsn = "./gis/counties.gpkg")
+  county_gpkg<-st_drop_geometry(county_gpkg)
+  cbsas<-unique(county_gpkg$cbsa)
+  rm(county_gpkg)
   #
   # get acs data
   #

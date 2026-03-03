@@ -19,7 +19,6 @@ blkgrp_dat_2023 <- get_acs(geography = "block group", variables = vars$acs_var,
 #
 blkgrp_acs_2023<-{}
 blkgrp_acs_2023$GEOID<-unique(blkgrp_dat_2023$GEOID)
-names(blkgrp_dat_2023)
 for(i in 1:length(vars$acs_var)){
   sbset<-subset(blkgrp_dat_2023,select=c('GEOID','estimate'),blkgrp_dat_2023$variable==vars$acs_var[i])
   sbset$estimate[is.na(sbset$estimate)]<-''
@@ -31,10 +30,12 @@ for(i in 1:length(vars$acs_var)){
 #
 # read in California block group shape file to get land area etc.
 #
-blkgrp_shp<-read_sf(dsn = "./gis", layer = "blkgrps")
-blkgrp_area<-subset(st_drop_geometry(blkgrp_shp),select=c('GEOID','ALAND'))
+blkgrp_shp<-st_read("./gis/blkgrps.gpkg")
+blkgrp_area<-subset(st_drop_geometry(blkgrp_shp),select=c('GEOID','lacres'))
 blkgrp_acs_2023<-as.data.frame(left_join(blkgrp_acs_2023,blkgrp_area,by='GEOID'))
-
+#
+# save to xlxs  
+#
 data_xls$remove_worksheet("blkgrp_acs_2023")
 data_xls$add_worksheet("blkgrp_acs_2023")
 data_xls$add_data("blkgrp_acs_2023",as.data.frame(blkgrp_acs_2023),colNames = TRUE, rowNames = TRUE,)

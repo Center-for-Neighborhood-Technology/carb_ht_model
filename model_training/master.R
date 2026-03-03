@@ -1,7 +1,7 @@
 #
-# install and load all the libraries that will be needed
+# suppress warnings
 #
-source("./utilities/manage_packages.R")
+options(warn = -1)
 #
 # install and load all the libraries that will be needed
 #
@@ -18,3 +18,7 @@ source("./model_training/ols_fits.R")
 # Now run the model, you will be asked for what household
 #
 source("./model_training/run_models.R")
+#
+# restore warnings
+#
+options(warn = 0)

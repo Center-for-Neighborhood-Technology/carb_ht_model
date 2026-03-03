@@ -30,10 +30,10 @@ get_county_hh_vars<-function(carb_output,hh_choice,htd,hud_inc=0,hud_size=0){
   county_hh_data<-get_county_acs(hh_census_vars,state)
   if(hh_choice=='ami'){
     cbsa_hh_data<-get_cbsa_acs(hh_census_vars,state)
-    county_shp<-read_sf(dsn = "./tiger", layer = "ca_counties_2023")
-    county_shp <- st_drop_geometry(county_shp)
-    names(county_shp)
-    cnty_cbsa<-as.data.frame(subset(county_shp,county_shp$in_cbsa, select = c(GEOID,cbsa)))
+    county_gpkg<-st_read(dsn = "./gis/counties.gpkg")
+    county_gpkg <- st_drop_geometry(county_gpkg)
+    names(county_gpkg)
+    cnty_cbsa<-as.data.frame(subset(county_gpkg,county_gpkg$in_cbsa, select = c(GEOID,cbsa)))
     cbsas<-unique(cnty_cbsa$cbsa)
     for(c in 1:length(cbsas)){
       this_cbsa<-cbsas[c]
@@ -98,10 +98,10 @@ get_cbsa_acs<-function(hh_census_vars,state){
   #
   # the cbsa to county indexes are in the shape file
   #
-  county_shp<-read_sf(dsn = "./tiger", layer = "ca_counties_2023")
-  county_shp<-st_drop_geometry(county_shp)
-  cbsas<-unique(county_shp$cbsa)
-  rm(county_shp)
+  county_gpkg<-st_read(dsn = "./gis/counties.gpkg")
+  county_gpkg<-st_drop_geometry(county_gpkg)
+  cbsas<-unique(county_gpkg$cbsa)
+  rm(county_gpkg)
   #
   # get acs data
   #
