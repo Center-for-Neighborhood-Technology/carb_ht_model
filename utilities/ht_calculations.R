@@ -68,7 +68,7 @@ get_prices<-function(modeled){
   gas_prices<-eia_data(dir='petroleum/pri/gnd',  data = "value",
                        facets = list(product='EPMR',duoarea=c('SCA','Y05LA','Y05SF')),
                        freq = "annual",
-                       start = "2023",end="2024",
+                       start = "2023",end="2023",
                        sort = list(cols = "duoarea", order = "asc"),)
   duas<-unique(gas_prices$duoarea)
   modeled$gas_price<-0.0
@@ -133,12 +133,17 @@ get_prices<-function(modeled){
   # now get the average fuel per mile for each fuel - gas, diesel and electricity
   #
   vmt_normalization<-as.data.frame(wb_read(data_prep,sheet='vmt_normalization'))
-  names(vmt_normalization)
+  names(vmt_normalization)[2]<-'geoid'
   c<-1
-  modeled$gas_mpg_per_frac<-modeled$hybrid_mpg_per_frac<-modeled$diesel_mpg_per_frac<-modeled$ev_mpkwh_per_frac<-modeled$hybrid_mpkwh_per_frac<-0
-  vmt_normalization<-subset(vmt_normalization,vmt_normalization$GEOID %in% unique(substr(modeled$geoid,1,5)))
-  for(c in 1:length(vmt_normalization$GEOID)){
-    geoid<-vmt_normalization$GEOID[c]
+  modeled$gas_mpg_per_frac<-
+    modeled$hybrid_mpg_per_frac<-
+    modeled$diesel_mpg_per_frac<-
+    modeled$ev_mpkwh_per_frac<-
+    modeled$hybrid_mpkwh_per_frac<-0
+  vmt_normalization<-subset(vmt_normalization,vmt_normalization$geoid %in% unique(substr(modeled$geoid,1,5)))
+  names(vmt_normalization)
+  for(c in 1:length(vmt_normalization$geoid)){
+    geoid<-vmt_normalization$geoid[c]
     this_gas_mpg<-vmt_normalization$gasoline_mpg[c]/vmt_normalization$gasoline_frac_vmt[c]
     this_hybrid_mpg<-vmt_normalization$plug_in_hybrid_mpg[c]/vmt_normalization$plug_in_hybrid_frac_vmt[c]
     this_diesel_mpg<-vmt_normalization$diesel_mpg[c]/vmt_normalization$diesel_frac_vmt[c]
@@ -214,7 +219,106 @@ calculate_costs_ht<-function(modeled) {
   modeled
 }
 
+#
+# this sets up the HUD household and gets the hh data by county
+#
+get_hud_acs<-function(carb_output,hh_census_vars,state,hud_inc,hud_size){
+  #
+  # first read in HUD household data from the spread sheet
+  #
+  hud_hhs_data<-wb_read(carb_output,sheet='hud_hhs')
+  hud_hhs_data$GEOID<-paste('06',hud_hhs_data$county_fips,sep='')
+  hud_hhs$prefix<-c('ELI',
+                    'l50',
+                    'l80')
+  hud_hh <-paste(hud_hhs$prefix[hud_inc],'_',hud_size,sep='')
+  hh_workers<-paste('hh_by_workers_',hud_size,'person',sep='')
+  if(hud_size>=4){
+    hh_workers<-paste('hh_by_workers_',hud_size,'person_plus',sep='')
+  }
+  hud_hh_data<-subset(hud_hhs_data,select=c('GEOID',hud_hh))
+  hud_hh_data$hh_size<-hud_size
+  #
+  # get acs data
+  #
+  workers_by_hh_size<-subset(hh_census_vars,
+                             (substring(hh_census_vars$var_name,1,nchar(hh_workers))== hh_workers) | 
+                               (hh_census_vars$var_name %in% c('total_workers','commuters_total')))
+  county_dat_2023 <- get_acs(geography = "county", variables = workers_by_hh_size$acs_var,
+                             state =state,geometry = FALSE, year = 2023)
+  acs_2023<-{}
+  acs_2023$GEOID<-unique(county_dat_2023$GEOID)
+  names(county_dat_2023)
+  for(i in 1:length(workers_by_hh_size$acs_var)){
+    sbset<-subset(county_dat_2023,select=c('GEOID','estimate'),county_dat_2023$variable==workers_by_hh_size$acs_var[i])
+    sbset$estimate<-as.numeric(sbset$estimate)
+    names(sbset)[names(sbset) == "estimate"] <-workers_by_hh_size$var_name[i]
+    a<-as.data.frame(merge(acs_2023,sbset,by='GEOID'))
+    acs_2023<-a
+  }
+  names(acs_2023)
+  head(acs_2023)
+  acs_2023$wphh<-0
+  for(i in 5:(4+hud_size)){
+    n<-(as.numeric(i)-4)
+    acs_2023$wphh <- acs_2023$wphh + (n*acs_2023[[workers_by_hh_size$var_name[i]]])/acs_2023[[workers_by_hh_size$var_name[3]]]
+  }
+  acs_2023$commuter_per_hh<-acs_2023$wphh*acs_2023$commuters_total/acs_2023$total_workers 
+  head(acs_2023)
+  cphh<-subset(acs_2023,select=c('GEOID','commuter_per_hh'))
+  hud_hh_data<-as.data.frame(left_join(hud_hh_data,cphh,by='GEOID'))
+  names(hud_hh_data)<-c('GEOID','median_hh_income','avg_hh_size','avg_commuters')
+  hud_hh_data
+}
 
+get_county_hh_vars<-function(carb_output,hh_choice,htd,hud_inc=0,hud_size=0){
+  #
+  # read in excel output file that has some data we need and we will store the calculated values in
+  #
+  hh_census_vars<-wb_read(carb_output,sheet='hh_census_vars')
+  state=c("06")
+  county_hh_data<-get_county_acs(hh_census_vars,state)
+  if(hh_choice=='ami'){
+    cbsa_hh_data<-get_cbsa_acs(hh_census_vars,state)
+    county_gpkg<-st_read(dsn = "./gis/counties.gpkg")
+    county_gpkg <- st_drop_geometry(county_gpkg)
+    names(county_gpkg)
+    cnty_cbsa<-as.data.frame(subset(county_gpkg,county_gpkg$in_cbsa, select = c(GEOID,cbsa)))
+    cbsas<-unique(cnty_cbsa$cbsa)
+    for(c in 1:length(cbsas)){
+      this_cbsa<-cbsas[c]
+      this_cbsa_data<-subset(cbsa_hh_data,cbsa_hh_data$GEOID==this_cbsa)
+      these_counties<-subset(cnty_cbsa,cnty_cbsa$cbsa==this_cbsa, select=c(GEOID))
+      for(i in 2:length(names(county_hh_data))){
+        hhv<-names(county_hh_data)[i]
+        county_hh_data[which(county_hh_data$GEOID %in% these_counties$GEOID),][[hhv]]<-this_cbsa_data[[hhv]]
+      }
+    }
+  } else if(hh_choice=='state'){
+    state_hh_data<-get_state_acs(hh_census_vars,state)
+    for(i in 2:length(names(county_hh_data))){
+      hhv<-names(county_hh_data)[i]
+      county_hh_data[[hhv]]<-state_hh_data[[hhv]]
+    }
+  }else if(hh_choice %like% 'hud%'){
+    county_hh_data<-get_hud_acs(carb_output,hh_census_vars,state,hud_inc,hud_size)
+  }
+  county_hh_data
+}
 
+overwrite_model_hh_inputs<-function(htd,county_hh_data){
+  #
+  # this function overwrites the household variables for the independent variables
+  #
+  for(c in 1:length(county_hh_data$GEOID)){
+    cnty<-county_hh_data$GEOID[c]
+    this_hhs<-subset(county_hh_data,county_hh_data$GEOID==cnty)
+    for(i in 2:length(names(county_hh_data))){
+      hhv<-names(county_hh_data)[i]
+      hts_ind[which(hts_ind$GEOID %like% paste(cnty,'%',sep='')),][[hhv]]<-this_hhs[[hhv]]
+    }
+  }
+  hts_ind
+}
 
 

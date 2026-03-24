@@ -20,11 +20,12 @@ get_acs_variable<-function(acs_geo,acs_var,var_name,ndx,yr,st,cnts){
   acs_data
 }
 
-get_county_hh_vars<-function(carb_output,hh_choice,htd,hud_inc=0,hud_size=0){
+get_county_hh_vars<-function(carb_output,choice,htd,hud_inc=0,hud_size=0){
 #
 # read in excel output file that has some data we need and we will store the 
 #  calculated values in
 #
+  hh_choice<-hhs$prefix[choice]
   hh_census_vars<-wb_read(carb_output,sheet='hh_census_vars')
   state=c("06")
   county_hh_data<-get_county_acs(hh_census_vars,state)

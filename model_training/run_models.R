@@ -5,6 +5,7 @@ rm(list=ls())
 #
 # load some utilities
 #
+source("./utilities/manage_packages.R")
 source("./utilities/ht_calculations.R")
 source("./utilities/get_data_functions.R")
 #
@@ -43,11 +44,13 @@ hhs<-{}
 hhs$options <- c("Local Household",
                  "Typical County Household", 
                  "Typical Metro/Micro/County Household", 
-                 "Typical State Household")
+                 "Typical State Household",
+                 "HUD Specified Household")
 hhs$prefix<-c('local',
               'county',
               'ami',
-              'state')
+              'state',
+              'hud')
 choice_option <- select.list(
   choices = hhs$options,
   title = 'Choose the household:',
@@ -76,9 +79,9 @@ if(choice==5){
 if(choice==1){
   modeled<-hts_ind[c("GEOID",hh_vars[,1])]
 } else{
-  county_hh_data<-get_county_hh_vars(carb_output,hhs,choice,htd,hud_inc,hud_size)
-  modeled<-overwrite_modeled_hh_vars(htd,county_hh_data)
+  county_hh_data<-get_county_hh_vars(carb_output,choice,htd,hud_inc,hud_size)
   hts_ind<-overwrite_model_hh_inputs(htd,county_hh_data)
+  modeled<-hts_ind
 }
 #
 # we will need fraction of renters to calculate overall housing cost
@@ -90,6 +93,7 @@ modeled$frac_rent_hu<-htd$frac_rent_hu
 modeled<-predict_model(dep_vars,hts_ind,modeled,start=1,end=5)
 names(modeled)[1]<-'geoid'
 mold<-modeled
+modeled<-mold
 #
 # Now run the cost of each transportation component and the H, T and H+T
 #
@@ -102,16 +106,14 @@ carb_output<-add_xls_tab(carb_output,this_sheet,as.data.frame(modeled))
 
 wb_save(carb_output,file="./excel_files/carb_ht_outputs.xlsx",overwrite = TRUE)
 
-blkgrps<-read_sf(dsn = "./gis/", 
-                 layer = "blkgrps")
-#modeled<-merge(modeled,subset(blkgrps, select = c('geoid','lacres','geometry')))
+blkgrps<-st_read("./gis/blkgrps.gpkg")
+#modeled<-merge(modeled,subset(blkgrps, select = c('GEOID','lacres','geom')))
 
 modeled <- inner_join(modeled,
-                      subset(blkgrps, select = c('GEOID','lacres','geometry')),
+                      subset(blkgrps, select = c('GEOID','lacres','geom')),
                       by = c("geoid" = "GEOID"))
-
 #
 # save shape file 
 #
-write_sf(modeled, paste("./gis/",this_sheet,".shp",sep=''))
+write_sf(modeled, paste("./gis/",this_sheet,".gpkg",sep=''))
 
