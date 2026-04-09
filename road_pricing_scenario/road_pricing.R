@@ -52,19 +52,18 @@ hh_vars<- (subset(vars,vars$fit_type == 'hh',select=c('variable','formula')))
 #
 # now set up and pull just the independent variables including the intercept (value=1)
 #
-hts_ind<-htd[c('GEOID','households',ind_vars$variable)]
+hts_ind<-htd[c('geoid','households',ind_vars$variable)]
 hts_ind["(Intercept)"]<-1.0
 #
 # build the hh inputs into the modeling data
 #
-modeled<-hts_ind[c("GEOID",'households',hh_vars[,1],'frac_rent_hu')]
-names(modeled)[1]<-'geoid'
+modeled<-hts_ind[c("geoid",'households',hh_vars[,1],'frac_rent_hu')]
 #
 # eliminate block groups with no households and income out of limits, and with na for housing inputs
 #
 modeled<-subset(modeled,modeled$median_hh_income>2499 & modeled$median_hh_income<250000 & modeled$households>0)
 modeled<-subset(modeled,complete.cases(modeled))
-hts_ind<-subset(hts_ind,hts_ind$GEOID %in% modeled$geoid)
+hts_ind<-subset(hts_ind,hts_ind$geoid %in% modeled$geoid)
 #
 # get the price of everything
 #
@@ -165,7 +164,7 @@ for(q in 1:5){
   rev_fee[4]<-round(sum(sbst$vmt_per_hh_og*sbst$households)/sum(sbst$households))
   rev_fee[5]<-round(sum(sbst$vmt_per_hh*sbst$households))
   rev_fee[6]<-round(sum(sbst$vmt_per_hh_og*sbst$households))
-  print('Cost, Revenue, Avg VMT, OG Ave, tot VMT, OG tot')
+  print('  Cost,      Revenue,      Avg VMT,      OG Ave,      tot VMT,      OG tot')
   print(rev_fee)
 
   current_op_maint_expend<-6066530217
@@ -230,6 +229,19 @@ road_price_scn$add_data(paste(this_sheet),as.data.frame(modeled),colNames = TRUE
 
 wb_save(road_price_scn,file="./excel_files/road_pricing_scenario.xlsx",overwrite = TRUE)
 #
+# save geo package
+#
+blkgrps<-st_read("./gis/blkgrps.gpkg")
+modeled <- inner_join(modeled,
+                      blkgrps[,c('geoid','lacres','geom')],
+                      by = c("geoid" = "geoid"))
+#
+# save shape file 
+#
+write_sf(modeled, paste("./gis/",this_sheet,"_road_pricing.gpkg",sep=''))
+
+#
 # restore warnings
 #
 options(warn = 0)
+

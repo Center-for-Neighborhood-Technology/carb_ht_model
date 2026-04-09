@@ -45,21 +45,22 @@ if(make_pt_data){
   blkgrp_azcanvor_pt<-st_as_sf(as.data.frame(blkgrp_azcanvor),
                                coords = c("INTPTLON","INTPTLAT"),
                                crs = 4269, remove = FALSE)
+  names(blkgrp_azcanvor_pt)<-tolower(names(blkgrp_azcanvor_pt))
 } else{
   blkgrp_azcanvor_pt<-st_read("./gis/blkgrp_azcanvor_pt.gpkg")
   st_geometry(blkgrp_azcanvor_pt) <-'geometry'
 }
-blkgrp_azcanvor_pt <- left_join(blkgrp_azcanvor_pt,lodes_dat, by=c('GEOID'='w_bg'))
-acs_vars<-subset(as.data.frame(blkgrp_acs_2023),select=c('GEOID','households','occupied_hu','housing_units',
+blkgrp_azcanvor_pt <- left_join(blkgrp_azcanvor_pt,lodes_dat, by=c('geoid'='w_bg'))
+acs_vars<-subset(as.data.frame(blkgrp_acs_2023),select=c('geoid','households','occupied_hu','housing_units',
                                                          'renter_occupied_hu','hu_1_detached'))
-blkgrp_azcanvor_pt <- left_join(blkgrp_azcanvor_pt,acs_vars, by=c('GEOID'))
+blkgrp_azcanvor_pt <- left_join(blkgrp_azcanvor_pt,acs_vars, by=c('geoid'))
 #
-# create gravity data frame and order by GEOID
+# create gravity data frame and order by geoid
 #
 gravity<-subset(as.data.frame(st_drop_geometry(blkgrp_azcanvor_pt)),
-                        blkgrp_azcanvor_pt$GEOID %like% '06%',
-                        select=c('GEOID','COUNTYFP'))
-order_indices <- order(gravity$GEOID)
+                        blkgrp_azcanvor_pt$geoid %like% '06%',
+                        select=c('geoid','countyfp'))
+order_indices <- order(gravity$geoid)
 gravity<-as.data.frame(gravity[order_indices, ])
 #
 # define vars to calculate gravity for 
@@ -82,12 +83,12 @@ for(g in gravity_vars){
 
 cnty=''
 i<-1
-for(i in 1:length(gravity$GEOID)){
+for(i in 1:length(gravity$geoid)){
   cnty_old=cnty
-  cnty=gravity$COUNTYFP[i]
+  cnty=gravity$countyfp[i]
   if(cnty!=cnty_old){print(paste("Calculating gravity for county = ",cnty))}
-  stfid<-gravity$GEOID[i]
-  tst_pt<-subset(blkgrp_azcanvor_pt,blkgrp_azcanvor_pt$GEOID==stfid)
+  stfid<-gravity$geoid[i]
+  tst_pt<-subset(blkgrp_azcanvor_pt,blkgrp_azcanvor_pt$geoid==stfid)
   #
   #  fill the distance in miles
   #
@@ -109,4 +110,4 @@ wb_save(data_xls,file="./excel_files/data_prep.xlsx",overwrite = TRUE)
 #
 # save the California block groups, and the points for the four states
 #
-write_sf(subset(blkgrp_azcanvor_pt,select=c('GEOID','COUNTYFP','geometry')), "./gis/blkgrp_azcanvor_pt.gpkg")
+write_sf(subset(blkgrp_azcanvor_pt,select=c('geoid','countyfp','geometry')), "./gis/blkgrp_azcanvor_pt.gpkg")

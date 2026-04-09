@@ -35,7 +35,7 @@ hh_vars<- (subset(vars,vars$fit_type == 'hh',select=c('variable','formula')))
 #
 # now set up and pull just the independent variables
 #
-hts_ind<-htd[c('GEOID',ind_vars$variable)]
+hts_ind<-htd[c('geoid',ind_vars$variable)]
 hts_ind["(Intercept)"]<-1.0
 #
 # ask user what household to run
@@ -65,8 +65,8 @@ if(choice==5){
   hud_hhs$income_options <- c("Extremely Low Income",
                               "Low Income", 
                               "Moderate Income")
-  hud_inc <- menu(hud_hhs$income_options,title='Choose the HUD income level:') 
-  hud_size <- menu(1:8,title='Choose Number of People in the household:')
+  hud_inc <- menu(hud_hhs$income_options,title='Choose the HUD income level:', graphics = TRUE) 
+  hud_size <- menu(as.character(1:8),title='Choose Number of People in the household:', graphics = TRUE)
   hud_hhs$prefix<-c('ELI',
                     'l50',
                     'l80')
@@ -77,9 +77,9 @@ if(choice==5){
 # build the hh inputs into the modeling data
 #
 if(choice==1){
-  modeled<-hts_ind[c("GEOID",hh_vars[,1])]
+  modeled<-hts_ind[c("geoid",hh_vars[,1])]
 } else{
-  county_hh_data<-get_county_hh_vars(carb_output,choice,htd,hud_inc,hud_size)
+  county_hh_data<-get_county_hh_vars(carb_output,hhs$prefix[choice],htd,hud_inc,hud_size)
   hts_ind<-overwrite_model_hh_inputs(htd,county_hh_data)
   modeled<-hts_ind
 }
@@ -91,7 +91,6 @@ modeled$frac_rent_hu<-htd$frac_rent_hu
 # Now calculate the model for all rows if possible
 #
 modeled<-predict_model(dep_vars,hts_ind,modeled,start=1,end=5)
-names(modeled)[1]<-'geoid'
 mold<-modeled
 modeled<-mold
 #
@@ -107,11 +106,9 @@ carb_output<-add_xls_tab(carb_output,this_sheet,as.data.frame(modeled))
 wb_save(carb_output,file="./excel_files/carb_ht_outputs.xlsx",overwrite = TRUE)
 
 blkgrps<-st_read("./gis/blkgrps.gpkg")
-#modeled<-merge(modeled,subset(blkgrps, select = c('GEOID','lacres','geom')))
-
 modeled <- inner_join(modeled,
-                      subset(blkgrps, select = c('GEOID','lacres','geom')),
-                      by = c("geoid" = "GEOID"))
+                      blkgrps[,c('geoid','lacres','geom')],
+                      by = c("geoid" = "geoid"))
 #
 # save shape file 
 #

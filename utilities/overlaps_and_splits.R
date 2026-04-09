@@ -121,28 +121,6 @@ average_var_using_fractions<-function(xls_file,shape1,ndx1,shape2,ndx2,data_tab,
   agg_data
 }
 
-
-get_acs_variable<-function(acs_geo,acs_var,var_name,ndx,yr,st,cnts){
-  #
-  #
-  #
-  # acs_geo<-'block group'
-  # acs_var<-'B25009_001'
-  # var_name<-'households'
-  # ndx<-'GEOID'
-  # yr<-2023
-  # st<-'06'
-  # cnts<-mtc_counties$fipco
-  #
-  acs_data<-get_acs(geography = acs_geo, variables = acs_var,
-                                          state=st,county =cnts, geometry = FALSE, year = yr)
-  names(acs_data)[4]<-var_name
-  acs_data<-subset(acs_data,select=c(ndx,var_name))
-  acs_data
-}
-
-
-
 intersect_polygons<-function(p1,p2,ndx1,ndx2,nm1,nm2){
   #print(paste('inputs are:',p1,p2,ndx1,ndx2,nm1,nm2))
   #

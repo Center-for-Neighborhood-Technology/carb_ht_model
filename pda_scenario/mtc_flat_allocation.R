@@ -28,15 +28,15 @@ mtc_counties<-wb_read(pda_scenario,sheet='MTC_counties')
 #
 # read in 2023 block group acs households from census api
 #
-blkgrp_hhs_2023 <- get_acs_variable('block group','B25009_001','households','GEOID',2023,'06',mtc_counties$fipco)
+blkgrp_hhs_2023 <- get_acs_variable('block group','B25009_001','households','geoid',2023,'06',mtc_counties$fipco)
 names(blkgrp_hhs_2023)<-c('geoid','hhs23')
 #
 # read in the jobs for the mtc counties
 #
 lodes_2022<-wb_read(data_prep,sheet='lodes_2022')
-names(lodes_2022)[2]<-'GEOID'
-lodes_2022<-subset(lodes_2022,substring(lodes_2022$GEOID,1,5) %in% paste('06',mtc_counties$fipco,sep=''))
-blkgrp_jobs_22<-as.data.frame(subset(lodes_2022, select=c('GEOID','C000')))
+names(lodes_2022)[2]<-'geoid'
+lodes_2022<-subset(lodes_2022,substring(lodes_2022$geoid,1,5) %in% paste('06',mtc_counties$fipco,sep=''))
+blkgrp_jobs_22<-as.data.frame(subset(lodes_2022, select=c('geoid','C000')))
 names(blkgrp_jobs_22)<-c('geoid','jobs22')
 #
 # start building the projections

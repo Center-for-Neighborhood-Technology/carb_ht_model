@@ -187,12 +187,12 @@ for(i in 1:length(dep_vars[,1])){
 # Now calculate the prediction for all rows if possible
 #
 predicted<-as.data.frame(htd[,1])
-names(predicted)<- c('GEOID')
+names(predicted)<- c('geoid')
 #
 # find the block groups that have no transit and where no one uses transit 
 #  and force the fit to be zero
 #
-no_transit<-subset(htd,htd$bus_tci==0 & htd$other_tci==0 & htd$tas_acres==0 & htd$frac_transit_j2w==0)$GEOID
+no_transit<-subset(htd,htd$bus_tci==0 & htd$other_tci==0 & htd$tas_acres==0 & htd$frac_transit_j2w==0)$geoid
 #
 # calculate the predicted values, residuals and the quality of the fits
 #
@@ -227,7 +227,7 @@ for(i in 1:length(dep_vars[,1])){
       }
 
     }
-    if(ed=='frac_transit_j2w' & predicted$GEOID[j] %in% no_transit){predicted[j,ed]<-0.0}
+    if(ed=='frac_transit_j2w' & predicted$geoid[j] %in% no_transit){predicted[j,ed]<-0.0}
   }
   predicted[,ed_residual[ed]]<-predicted[,ed_measured[ed]]-predicted[,ed]
   gd<-subset(predicted,!is.na(predicted[,ed_residual[ed]]))
@@ -244,7 +244,7 @@ print(stats)
 #
 # get rid of the outlier that is in death valley
 #
-predicted<-subset(predicted,!(predicted$GEOID=='060270008001'))
+predicted<-subset(predicted,!(predicted$geoid=='060270008001'))
 if(make_plots){
   #
   # plot the residuals

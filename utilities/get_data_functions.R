@@ -8,7 +8,7 @@ get_acs_variable<-function(acs_geo,acs_var,var_name,ndx,yr,st,cnts){
   # acs_geo<-'block group'
   # acs_var<-'B25009_001'
   # var_name<-'households'
-  # ndx<-'GEOID'
+  # ndx<-'geoid'
   # yr<-2023
   # st<-'06'
   # cnts<-mtc_counties$fipco
@@ -16,16 +16,16 @@ get_acs_variable<-function(acs_geo,acs_var,var_name,ndx,yr,st,cnts){
   acs_data<-get_acs(geography = acs_geo, variables = acs_var,
                                           state=st,county =cnts, geometry = FALSE, year = yr)
   names(acs_data)[4]<-var_name
+  names(acs_data)<-tolower(names(acs_data))
   acs_data<-subset(acs_data,select=c(ndx,var_name))
   acs_data
 }
 
-get_county_hh_vars<-function(carb_output,choice,htd,hud_inc=0,hud_size=0){
+get_county_hh_vars<-function(carb_output,hh_choice,htd,hud_inc=0,hud_size=0){
 #
 # read in excel output file that has some data we need and we will store the 
 #  calculated values in
 #
-  hh_choice<-hhs$prefix[choice]
   hh_census_vars<-wb_read(carb_output,sheet='hh_census_vars')
   state=c("06")
   county_hh_data<-get_county_acs(hh_census_vars,state)
@@ -33,16 +33,19 @@ get_county_hh_vars<-function(carb_output,choice,htd,hud_inc=0,hud_size=0){
     cbsa_hh_data<-get_cbsa_acs(hh_census_vars,state)
     county_gpkg<-st_read(dsn = "./gis/counties.gpkg")
     county_gpkg <- st_drop_geometry(county_gpkg)
+    county_gpkg$in_cbsa<-!is.na(county_gpkg$cbsafp)
     names(county_gpkg)
-    cnty_cbsa<-as.data.frame(subset(county_gpkg,county_gpkg$in_cbsa, select = c(GEOID,cbsa)))
+    cnty_cbsa<-as.data.frame(subset(county_gpkg,county_gpkg$in_cbsa, select = c(geoid,cbsafp)))
     cbsas<-unique(cnty_cbsa$cbsa)
+    c<-1
     for(c in 1:length(cbsas)){
       this_cbsa<-cbsas[c]
-      this_cbsa_data<-subset(cbsa_hh_data,cbsa_hh_data$GEOID==this_cbsa)
-      these_counties<-subset(cnty_cbsa,cnty_cbsa$cbsa==this_cbsa, select=c(GEOID))
+      this_cbsa_data<-subset(cbsa_hh_data,cbsa_hh_data$geoid==this_cbsa)
+      these_counties<-subset(cnty_cbsa,cnty_cbsa$cbsa==this_cbsa, select=c(geoid))
+      i<-2
       for(i in 2:length(names(county_hh_data))){
         hhv<-names(county_hh_data)[i]
-        county_hh_data[which(county_hh_data$GEOID %in% these_counties$GEOID),][[hhv]]<-this_cbsa_data[[hhv]]
+        county_hh_data[which(county_hh_data$geoid %in% these_counties$geoid),][[hhv]]<-this_cbsa_data[[hhv]]
       }
     }
   } else if(hh_choice=='state'){
@@ -64,32 +67,25 @@ get_county_acs<-function(hh_census_vars,states){
   # get acs data
   #
   county_dat_2023 <- get_acs(geography = "county", variables = hh_census_vars$acs_var,
-                             state =states, geometry = FALSE, year = 2023)
-  acs_2023<-{}
-  acs_2023$GEOID<-unique(county_dat_2023$GEOID)
-  names(county_dat_2023)
-  for(i in 1:length(hh_census_vars$acs_var)){
-    sbset<-subset(county_dat_2023,select=c('GEOID','estimate'),county_dat_2023$variable==hh_census_vars$acs_var[i])
-    sbset$estimate[is.na(sbset$estimate)]<-''
-    names(sbset )[names(sbset) == "estimate"] <-hh_census_vars$var_name[i]
-    a<-as.data.frame(merge(acs_2023,sbset,by='GEOID'))
-    acs_2023<-a
-  }
+                             state =states, geometry = FALSE, year = 2023,output='wide')
+  acs_2023<-county_dat_2023[,c('GEOID',paste(hh_census_vars$acs_var,'E',sep=''))]
+  names(acs_2023)<-c('geoid',hh_census_vars$var_name)
+
   names(acs_2023)
   head(acs_2023)
   #
-  county_hh_data<-as.data.frame(acs_2023$GEOID)
-  names(county_hh_data)[names(county_hh_data) == "acs_2023$GEOID"]<-"GEOID"
+  county_hh_data<-as.data.frame(acs_2023$geoid)
   #
   # fill in the data
   #
+  i<-3
   for(i in 1:length(hh_vars$variable)){
     county_hh_data[[hh_vars$variable[i]]]<-as.numeric(eval(parse(text=(hh_vars$formula[i]))))
   }
   county_hh_data[is.na(county_hh_data)] <- ""
-  names(county_hh_data)
+  names(county_hh_data)[1]<-'geoid'
   head(county_hh_data)
-  length(county_hh_data$GEOID)
+  length(county_hh_data$geoid)
   county_hh_data
 }
 #
@@ -97,34 +93,36 @@ get_county_acs<-function(hh_census_vars,states){
 #
 get_cbsa_acs<-function(hh_census_vars,state){
   #
-  # the cbsa to county indexes are in the shape file
+  # the cbsa to county indexes are in the geopackage
   #
-  county_gpkg<-st_read(dsn = "./gis/counties.gpkg")
-  county_gpkg<-st_drop_geometry(county_gpkg)
-  cbsas<-unique(county_gpkg$cbsa)
-  rm(county_gpkg)
+  cnty<-st_read(dsn = "./gis/counties.gpkg")
+  cbsas<-unique(subset(cnty,!is.na(cnty$cbsafp)))$cbsafp
+  rm(cnty)
   #
   # get acs data
   #
   cbsa_dat_2023 <- get_acs(geography = "cbsa", variables = hh_census_vars$acs_var,
                            geometry = FALSE, year = 2023)
+  names(cbsa_dat_2023)<-tolower(names(cbsa_dat_2023))
+  cbsa_dat_2023<-subset(cbsa_dat_2023,cbsa_dat_2023$geoid %in% cbsas)
   acs_2023<-{}
-  acs_2023$GEOID<-unique(cbsa_dat_2023$GEOID)
+  acs_2023$geoid<-cbsas
   names(cbsa_dat_2023)
+  i<-2
   for(i in 1:length(hh_census_vars$acs_var)){
-    sbset<-subset(cbsa_dat_2023,select=c('GEOID','estimate'),cbsa_dat_2023$variable==hh_census_vars$acs_var[i])
+    #print(hh_census_vars$var_name[i])
+    sbset<-subset(cbsa_dat_2023,select=c('geoid','estimate'),cbsa_dat_2023$variable==hh_census_vars$acs_var[i])
     sbset$estimate[is.na(sbset$estimate)]<-''
-    names(sbset )[names(sbset) == "estimate"] <-hh_census_vars$var_name[i]
-    a<-as.data.frame(merge(acs_2023,sbset,by='GEOID'))
-    acs_2023<-a
+    names(sbset)[names(sbset) == "estimate"] <-hh_census_vars$var_name[i]
+    acs_2023<-as.data.frame(merge(acs_2023,sbset,by='geoid'))
   }
   names(acs_2023)
-  acs_2023<-subset(acs_2023,acs_2023$GEOID %in% cbsas)
+  acs_2023<-subset(acs_2023,acs_2023$geoid %in% cbsas)
   head(acs_2023)
   #
-  acs_hh_data<-as.data.frame(acs_2023$GEOID)
-  names(acs_hh_data)[names(acs_hh_data) == "acs_2023$GEOID"]<-"GEOID"
-  acs_hh_data<-as.data.frame(subset(acs_hh_data,acs_hh_data$GEOID %in% cbsas))
+  acs_hh_data<-as.data.frame(acs_2023$geoid)
+  names(acs_hh_data)[names(acs_hh_data) == "acs_2023$geoid"]<-"geoid"
+  acs_hh_data<-as.data.frame(subset(acs_hh_data,acs_hh_data$geoid %in% cbsas))
   #
   # fill in the data
   #
@@ -134,7 +132,7 @@ get_cbsa_acs<-function(hh_census_vars,state){
   acs_hh_data[is.na(acs_hh_data)] <- ""
   names(acs_hh_data)
   head(acs_hh_data)
-  length(acs_hh_data$GEOID)
+  length(acs_hh_data$geoid)
   acs_hh_data
 }
 #
@@ -145,22 +143,15 @@ get_state_acs<-function(hh_census_vars,state){
   # get acs data
   #
   state_dat_2023 <- get_acs(geography = "state", variables = hh_census_vars$acs_var,
-                            state =state,geometry = FALSE, year = 2023)
-  acs_2023<-{}
-  acs_2023$GEOID<-unique(state_dat_2023$GEOID)
-  names(state_dat_2023)
-  for(i in 1:length(hh_census_vars$acs_var)){
-    sbset<-subset(state_dat_2023,select=c('GEOID','estimate'),state_dat_2023$variable==hh_census_vars$acs_var[i])
-    sbset$estimate[is.na(sbset$estimate)]<-''
-    names(sbset )[names(sbset) == "estimate"] <-hh_census_vars$var_name[i]
-    a<-as.data.frame(merge(acs_2023,sbset,by='GEOID'))
-    acs_2023<-a
-  }
+                            state =state,geometry = FALSE, year = 2023,output='wide')
+  acs_2023<-state_dat_2023[,c('GEOID',paste(hh_census_vars$acs_var,'E',sep=''))]
+  names(acs_2023)<-c('geoid',hh_census_vars$var_name)
+  rm(state_dat_2023)
   names(acs_2023)
   head(acs_2023)
   #
-  acs_hh_data<-as.data.frame(acs_2023$GEOID)
-  names(acs_hh_data)[names(acs_hh_data) == "acs_2023$GEOID"]<-"GEOID"
+  acs_hh_data<-as.data.frame(acs_2023$geoid)
+  names(acs_hh_data)[1]<-"geoid"
   #
   # fill in the data
   #
@@ -170,7 +161,7 @@ get_state_acs<-function(hh_census_vars,state){
   acs_hh_data[is.na(acs_hh_data)] <- ""
   names(acs_hh_data)
   head(acs_hh_data)
-  length(acs_hh_data$GEOID)
+  length(acs_hh_data$geoid)
   acs_hh_data
 }
 

@@ -7,25 +7,25 @@ rm(list=ls())
 #
 data_xls<-wb_load("./excel_files/data_prep.xlsx")
 acs_2023<- wb_read(data_xls,sheet='blkgrp_acs_2023')
-acs_2023<-as.data.frame(subset(acs_2023,acs_2023$GEOID %like% '06%'))
+acs_2023<-as.data.frame(subset(acs_2023,acs_2023$geoid %like% '06%'))
 
-fitting_data<-as.data.frame(acs_2023$GEOID)
-names(fitting_data)[names(fitting_data) == "acs_2023$GEOID"]<-"GEOID"
+fitting_data<-as.data.frame(acs_2023$geoid)
+names(fitting_data)[names(fitting_data) == "acs_2023$geoid"]<-"geoid"
 
 modeled_vmt<- wb_read(data_xls,sheet='vmt')
-modeled_vmt<-subset(modeled_vmt,select=c('GEOID','normalized_vmt_per_hh'))
-names(modeled_vmt)<-c('GEOID','vmt_per_hh')
-modeled_vmt<-as.data.frame(left_join(fitting_data,modeled_vmt,by='GEOID'))
+modeled_vmt<-subset(modeled_vmt,select=c('geoid','normalized_vmt_per_hh'))
+names(modeled_vmt)<-c('geoid','vmt_per_hh')
+modeled_vmt<-as.data.frame(left_join(fitting_data,modeled_vmt,by='geoid'))
 
 block_size<- wb_read(data_xls,sheet='block_size')
-block_size<-as.data.frame(left_join(fitting_data,block_size,by='GEOID'))
+block_size<-as.data.frame(left_join(fitting_data,block_size,by='geoid'))
 
 transit_vars <- wb_read(data_xls,sheet='transit_vars')
-transit_vars<-as.data.frame(left_join(fitting_data,transit_vars,by='GEOID'))
+transit_vars<-as.data.frame(left_join(fitting_data,transit_vars,by='geoid'))
 
 gravity_10<- wb_read(data_xls,sheet='gravity_10')
 names(gravity_10)[is.na(names(gravity_10))] <-'rid'
-gravity_10<-as.data.frame(left_join(fitting_data,gravity_10,by='GEOID'))
+gravity_10<-as.data.frame(left_join(fitting_data,gravity_10,by='geoid'))
 
 ht_models<-wb_load("./excel_files/carb_ht_model.xlsx")
 modeling_vars<- wb_read(ht_models,sheet='variable_definitions')

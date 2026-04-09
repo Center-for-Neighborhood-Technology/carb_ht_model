@@ -29,14 +29,14 @@ sacog_counties<-wb_read(gz_scenario,sheet='SACOG_counties')
 
 blkgrps_og<-read_sf(dsn = "./gis/blkgrps.gpkg")
 
-blkgrps_og<-subset(blkgrps_og,substring(blkgrps_og$GEOID,3,5) %in% sacog_counties$fipco)
-blkgrps_og<-subset(blkgrps_og,select=c('GEOID','geom'))
+blkgrps_og<-subset(blkgrps_og,substring(blkgrps_og$geoid,3,5) %in% sacog_counties$fipco)
+blkgrps_og<-subset(blkgrps_og,select=c('geoid','geom'))
 names(blkgrps_og)[1]<-'geoid'
 blkgrps<-cut_water_out_of_layer(blkgrps_og,'geoid',gis_folder,"blkgrps",1)
 #
 # read in 2023 block group acs households from census api
 #
-blkgrp_hhs_2023 <- get_acs_variable('block group','B25009_001','households','GEOID',2023,'06',sacog_counties$fipco)
+blkgrp_hhs_2023 <- get_acs_variable('block group','B25009_001','households','geoid',2023,'06',sacog_counties$fipco)
 names(blkgrp_hhs_2023)[1]<-'geoid'
 #
 # read in the jobs for the block groups in the sacog counties
