@@ -3,8 +3,5 @@
 .RData*
 .Ruserdata
 .RDataTmp
-gis/ca_30_min_transit_sheds.*
 pda_scenario/shp_files/tas.*
-gis/blkgrps.*
-gis/water.*
-gis/*_model.*
+gis/
