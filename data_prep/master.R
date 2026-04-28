@@ -1,4 +1,8 @@
 #
+# install and load all the libraries that will be needed
+#
+source("./utilities/manage_packages.R")
+#
 # suppress warnings
 #
 options(warn = -1)
