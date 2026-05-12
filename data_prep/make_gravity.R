@@ -53,11 +53,12 @@ if(make_pt_data){
   blkgrp_azcanvor_pt<-st_as_sf(as.data.frame(blkgrp_azcanvor),
                                coords = c("INTPTLON","INTPTLAT"),
                                crs = 4269, remove = FALSE)
-  names(blkgrp_azcanvor_pt)<-tolower(names(blkgrp_azcanvor_pt))
 } else{
   blkgrp_azcanvor_pt<-st_read("./gis/blkgrp_azcanvor_pt.gpkg")
   st_geometry(blkgrp_azcanvor_pt) <-'geometry'
 }
+names(blkgrp_azcanvor_pt)<-tolower(names(blkgrp_azcanvor_pt))
+
 blkgrp_azcanvor_pt <- left_join(blkgrp_azcanvor_pt,lodes_dat, by=c('geoid'='w_bg'))
 acs_vars<-subset(as.data.frame(blkgrp_acs_current),select=c('geoid','households','occupied_hu','housing_units',
                                                          'renter_occupied_hu','hu_1_detached'))
