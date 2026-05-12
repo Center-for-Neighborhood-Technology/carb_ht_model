@@ -3,13 +3,17 @@
 #
 rm(list=ls())
 #
+# get the current year(s) 
+#
+source("./utilities/current_years.R")
+#
 # load some utilities
 #
 source("./utilities/overlaps_and_splits.R")
 #
 # get tiger shape file for California block groups
 #
-blkgrps<-block_groups(state='06',year=2023)
+blkgrps<-block_groups(state='06',year=current_acs_year)
 #
 # get the water shape files and cut it out
 #  the pacific coast within 12 Nautical Miles of shore
@@ -59,7 +63,7 @@ st_write(blkgrps,dsn='./gis/blkgrps.gpkg',delete_dsn=TRUE)
 #
 # now do counties
 #
-counties<-counties(state='06',year=2023)
+counties<-counties(state='06',year=current_acs_year)
 counties<-subset(counties,counties$ALAND>0,select=c('GEOID','NAME','CBSAFP','ALAND','AWATER','INTPTLAT','INTPTLON','geometry'))
 names(counties)<- tolower(names(counties))
 #
@@ -76,7 +80,7 @@ st_write(counties,dsn='./gis/counties.gpkg',delete_dsn=TRUE)
 #
 # now do places
 #
-places<-places(state='06',year=2023)
+places<-places(state='06',year=current_acs_year)
 places<-subset(places,places$ALAND>0,select=c('GEOID','NAME','ALAND','AWATER','INTPTLAT','INTPTLON','geometry'))
 names(places)<- tolower(names(places))
 #
@@ -93,7 +97,7 @@ st_write(places,dsn='./gis/places.gpkg',delete_dsn=TRUE)
 #
 # now do cbsas
 #
-cbsas<-core_based_statistical_areas(year=2023)
+cbsas<-core_based_statistical_areas(year=current_acs_year)
 cbsas<-subset(cbsas,grepl('CA', cbsas$NAME) )
 cbsas<-subset(cbsas,cbsas$ALAND>0,select=c('GEOID','NAME','ALAND','AWATER','INTPTLAT','INTPTLON','geometry'))
 names(cbsas)<-tolower(names(cbsas))

@@ -1,3 +1,8 @@
+#
+# get the current year(s) 
+#
+source("./utilities/current_years.R")
+
 add_xls_tab<-function(xls_file,this_sheet,sheet_data){
   #
   # this function add a sheet to the xls_file and returns it
@@ -68,7 +73,7 @@ get_prices<-function(modeled){
   gas_prices<-eia_data(dir='petroleum/pri/gnd',  data = "value",
                        facets = list(product='EPMR',duoarea=c('SCA','Y05LA','Y05SF')),
                        freq = "annual",
-                       start = "2023",end="2023",
+                       start = "current_acs_year",end="current_acs_year",
                        sort = list(cols = "duoarea", order = "asc"),)
   duas<-unique(gas_prices$duoarea)
   modeled$gas_price<-0.0
@@ -89,7 +94,7 @@ get_prices<-function(modeled){
   diesel_prices<-as.data.frame(eia_data(dir='petroleum/pri/gnd',  data = "value",
                           facets = list(product='EPD2D',duoarea=c('SCA')),
                           freq = "annual",
-                          start = "2023",end="2023",
+                          start = "current_acs_year",end="current_acs_year",
                           sort = list(cols = "duoarea", order = "asc"),))
   modeled$diesel_price<-as.numeric(diesel_prices$value)
   rm(diesel_prices)
@@ -101,7 +106,7 @@ get_prices<-function(modeled){
     data = "price",
     facets = list(sectorid = c("RES"), stateid = "CA"),
     freq = "annual",
-    start = "2023",end="2023"
+    start = "current_acs_year",end="current_acs_year"
   )
   modeled$electric_price<-as.numeric(electric_prices$price)/100.0
   rm(electric_prices)
@@ -109,9 +114,9 @@ get_prices<-function(modeled){
   #  now auto ownership costs
   #
   inflation_from_2010<-wb_read(data_prep,sheet='inflation_from_2010')
-  inflation_from_2010<-subset(inflation_from_2010,inflation_from_2010$year==2023)
+  inflation_from_2010<-subset(inflation_from_2010,inflation_from_2010$year==current_acs_year)
   #
-  # adjust the 2010 costs from the LAI research to 2023 dollars
+  # adjust the 2010 costs from the LAI research to current_acs_year dollars
   #
   auto_cost_service_flow<-wb_read(data_prep,sheet='auto_cost_service_flow')
   auto_cost_service_flow$service_flow_value<-auto_cost_service_flow$service_flow_value*inflation_from_2010$auto_inflation
@@ -244,21 +249,21 @@ get_hud_acs<-function(carb_output,hh_census_vars,state,hud_inc,hud_size){
   workers_by_hh_size<-subset(hh_census_vars,
                              (substring(hh_census_vars$var_name,1,nchar(hh_workers))== hh_workers) | 
                                (hh_census_vars$var_name %in% c('total_workers','commuters_total')))
-  county_dat_2023 <- get_acs(geography = "county", variables = workers_by_hh_size$acs_var,
-                             state =state,geometry = FALSE, year = 2023,output='wide')
-  acs_2023<-county_dat_2023[,c('GEOID',paste(workers_by_hh_size$acs_var,'E',sep=''))]
-  names(acs_2023)<-c('geoid',workers_by_hh_size$var_name)
-  names(acs_2023)
-  head(acs_2023)
-  acs_2023$wphh<-0
+  county_dat_current <- get_acs(geography = "county", variables = workers_by_hh_size$acs_var,
+                             state =state,geometry = FALSE, year = current_acs_year,output='wide')
+  acs_current<-county_dat_current[,c('GEOID',paste(workers_by_hh_size$acs_var,'E',sep=''))]
+  names(acs_current)<-c('geoid',workers_by_hh_size$var_name)
+  names(acs_current)
+  head(acs_current)
+  acs_current$wphh<-0
   i<-5
   for(i in 5:min((4+hud_size),7)){
     n<-(as.numeric(i)-4)
-    acs_2023$wphh <- acs_2023$wphh + (n*acs_2023[[workers_by_hh_size$var_name[i]]])/acs_2023[[workers_by_hh_size$var_name[3]]]
+    acs_current$wphh <- acs_current$wphh + (n*acs_current[[workers_by_hh_size$var_name[i]]])/acs_current[[workers_by_hh_size$var_name[3]]]
   }
-  acs_2023$commuter_per_hh<-acs_2023$wphh*acs_2023$commuters_total/acs_2023$total_workers 
-  head(acs_2023)
-  cphh<-subset(acs_2023,select=c('geoid','commuter_per_hh'))
+  acs_current$commuter_per_hh<-acs_current$wphh*acs_current$commuters_total/acs_current$total_workers 
+  head(acs_current)
+  cphh<-subset(acs_current,select=c('geoid','commuter_per_hh'))
   hud_hh_data<-as.data.frame(left_join(hud_hh_data,cphh,by='geoid'))
   names(hud_hh_data)<-c('geoid','median_hh_income','avg_hh_size','avg_commuters')
   hud_hh_data

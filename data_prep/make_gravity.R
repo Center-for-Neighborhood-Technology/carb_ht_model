@@ -1,12 +1,20 @@
 #
+# clear all memory before starting
+#
+rm(list=ls())
+#
+# get the current year(s) 
+#
+source("./utilities/current_years.R")
+#
 # read in the whole xlsx file
 #
 data_xls<-wb_load("./excel_files/data_prep.xlsx")
-blkgrp_acs_2023<- wb_read(data_xls,sheet='blkgrp_acs_2023')
+blkgrp_acs_current<- wb_read(data_xls,sheet='blkgrp_acs_current')
 #
 # now get the LEHD LODES data
 #
-lodes_dat <- grab_lodes(state = c("az","ca", "nv", "or"), year =2022, 
+lodes_dat <- grab_lodes(state = c("az","ca", "nv", "or"), year = current_lodes_year, 
                         version = "LODES8",lodes_type = "wac", 
                         job_type = "JT00", segment = "S000", 
                         state_part = "", agg_geo = "bg") 
@@ -14,9 +22,9 @@ lodes_dat<-subset(lodes_dat,select=c("w_bg","C000","CNS01","CNS02","CNS03","CNS0
                                      "CNS05","CNS06","CNS07","CNS08","CNS09","CNS10",
                                      "CNS11","CNS12","CNS13","CNS14","CNS15","CNS16",
                                      "CNS17","CNS18","CNS19","CNS20") )
-data_xls$remove_worksheet("lodes_2022")
-data_xls$add_worksheet("lodes_2022")
-data_xls$add_data("lodes_2022",as.data.frame(lodes_dat),colNames = TRUE, rowNames = TRUE,)
+data_xls$remove_worksheet("lodes_current_lodes_year")
+data_xls$add_worksheet("lodes_current_lodes_year")
+data_xls$add_data("lodes_current_lodes_year",as.data.frame(lodes_dat),colNames = TRUE, rowNames = TRUE,)
 #
 # this only has to be run once
 #
@@ -25,10 +33,10 @@ if(make_pt_data){
   #
   # get the shape files
   #
-  ca_blkgrps<-block_groups('CA',year=2023)
-  az_blkgrps<-block_groups('AZ',year=2023)
-  nv_blkgrps<-block_groups('NV',year=2023)
-  or_blkgrps<-block_groups('OR',year=2023)
+  ca_blkgrps<-block_groups('CA',year=current_acs_year)
+  az_blkgrps<-block_groups('AZ',year=current_acs_year)
+  nv_blkgrps<-block_groups('NV',year=current_acs_year)
+  or_blkgrps<-block_groups('OR',year=current_acs_year)
   #
   #  merge them 
   #
@@ -51,7 +59,7 @@ if(make_pt_data){
   st_geometry(blkgrp_azcanvor_pt) <-'geometry'
 }
 blkgrp_azcanvor_pt <- left_join(blkgrp_azcanvor_pt,lodes_dat, by=c('geoid'='w_bg'))
-acs_vars<-subset(as.data.frame(blkgrp_acs_2023),select=c('geoid','households','occupied_hu','housing_units',
+acs_vars<-subset(as.data.frame(blkgrp_acs_current),select=c('geoid','households','occupied_hu','housing_units',
                                                          'renter_occupied_hu','hu_1_detached'))
 blkgrp_azcanvor_pt <- left_join(blkgrp_azcanvor_pt,acs_vars, by=c('geoid'))
 #

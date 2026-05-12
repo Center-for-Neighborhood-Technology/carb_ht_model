@@ -66,13 +66,13 @@ sum_var_using_fractions<-function(xls_file,shape1,ndx1,shape2,ndx2,data_tab,var_
   # var_name is the data field we are summing up
   #
   # for example
-  # gz_scenario,'gzs','gz_id ','blkgrps','geoid', blkgrp_hhs_2023,'households'
+  # gz_scenario,'gzs','gz_id ','blkgrps','geoid', blkgrp_hhs_current,'households'
   #xls_file<-gz_scenario
   #shape1<-'gzs'
   #ndx1<-'gz_id'
   #shape2<-'blkgrps'
   #ndx2<-'geoid'
-  #data_tab<-blkgrp_hhs_2023
+  #data_tab<-blkgrp_hhs_current
   #var_name<-'households'
   #
   fracs<-get_overlap_fractions(xls_file,shape1,shape2,ndx1,ndx2,write_xls)

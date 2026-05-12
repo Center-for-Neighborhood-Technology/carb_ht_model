@@ -2,6 +2,13 @@
 # clear all memory before starting
 #
 rm(list=ls())
+#
+# get the current year(s) 
+#
+source("./utilities/current_years.R")
+#
+# get functions we will need
+#
 source("./utilities/get_data_functions.R")
 source("./utilities/overlaps_and_splits.R")
 source("./utilities/ploting_scripts.R")
@@ -34,21 +41,21 @@ blkgrps_og<-subset(blkgrps_og,select=c('geoid','geom'))
 names(blkgrps_og)[1]<-'geoid'
 blkgrps<-cut_water_out_of_layer(blkgrps_og,'geoid',gis_folder,"blkgrps",1)
 #
-# read in 2023 block group acs households from census api
+# read in current_acs_year block group acs households from census api
 #
-blkgrp_hhs_2023 <- get_acs_variable('block group','B25009_001','households','geoid',2023,'06',sacog_counties$fipco)
-names(blkgrp_hhs_2023)[1]<-'geoid'
+blkgrp_hhs_current <- get_acs_variable('block group','B25009_001','households','geoid',current_acs_year,'06',sacog_counties$fipco)
+names(blkgrp_hhs_current)[1]<-'geoid'
 #
 # read in the jobs for the block groups in the sacog counties
 #
-lodes_2022<-wb_read(data_prep,sheet='lodes_2022')
-lodes_2022<-subset(lodes_2022,substring(lodes_2022$w_bg,1,5) %in% paste('06',sacog_counties$fipco,sep=''))
-blkgrp_jobs_22<-subset(lodes_2022, select=c('w_bg','C000'))
+lodes_current<-wb_read(data_prep,sheet='lodes_current')
+lodes_current<-subset(lodes_current,substring(lodes_current$w_bg,1,5) %in% paste('06',sacog_counties$fipco,sep=''))
+blkgrp_jobs_22<-subset(lodes_current, select=c('w_bg','C000'))
 names(blkgrp_jobs_22)[1]<-'geoid'
 #
 # now merge hhs and jobs
 #
-blkgrp_projections<-merge(blkgrp_hhs_2023,blkgrp_jobs_22)
+blkgrp_projections<-merge(blkgrp_hhs_current,blkgrp_jobs_22)
 names(blkgrp_projections)<-c('geoid','hhs23','jobs22')
 #
 # now allocate the hhs and jobs in each block group that are in any green zone

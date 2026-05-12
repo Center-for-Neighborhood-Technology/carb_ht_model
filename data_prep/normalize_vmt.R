@@ -3,6 +3,10 @@
 #
 rm(list=ls())
 #
+# get the current year(s) 
+#
+source("./utilities/current_years.R")
+#
 # read in the modeling inputs xlsx file
 #
 input_data<-wb_load("./excel_files/data_prep.xlsx")
@@ -11,7 +15,7 @@ input_data<-wb_load("./excel_files/data_prep.xlsx")
 #
 modeled_vmt <- wb_read(input_data,sheet='vmt')
 modeled_vmt <- subset(modeled_vmt,select = c('geoid','vmt_per_hh'))
-acs_vars<- wb_read(input_data,sheet='blkgrp_acs_2023')
+acs_vars<- wb_read(input_data,sheet='blkgrp_acs_current')
 acs_vars<-subset(acs_vars,select=c('geoid','households'))
 modeled_vmt<-as.data.frame(left_join(modeled_vmt,acs_vars,by='geoid'))
 modeled_vmt$total_hh_vmt<-as.numeric(modeled_vmt$vmt_per_hh)*as.numeric(modeled_vmt$households)
@@ -28,15 +32,15 @@ names(cnty_modeled_vmt)<-c("geoid","total_modeled_vmt")
 hh_census_vars<-wb_read(input_data,sheet='hh_census_vars')
 states=c("CA")
 
-county_dat_2023 <- get_acs(geography = "county", variables = hh_census_vars$acs_var,
-                           state =states, geometry = FALSE, year = 2023,output = 'wide')
-acs_2023<-county_dat_2023[,c('GEOID',paste(hh_census_vars$acs_var,'E',sep=''))]
-names(acs_2023)<-c('geoid',hh_census_vars$var_name)
-acs_2023<-subset(acs_2023,select=c('geoid','households','agg_hh_vehicles'))
-names(acs_2023)
-head(acs_2023)
-cnty_modeled_vmt<-as.data.frame(left_join(cnty_modeled_vmt,acs_2023,by='geoid'))
-rm(acs_2023,county_dat_2023,hh_census_vars,states,sbset)
+county_dat_current <- get_acs(geography = "county", variables = hh_census_vars$acs_var,
+                           state =states, geometry = FALSE, year = current_acs_year,output = 'wide')
+acs_current<-county_dat_current[,c('GEOID',paste(hh_census_vars$acs_var,'E',sep=''))]
+names(acs_current)<-c('geoid',hh_census_vars$var_name)
+acs_current<-subset(acs_current,select=c('geoid','households','agg_hh_vehicles'))
+names(acs_current)
+head(acs_current)
+cnty_modeled_vmt<-as.data.frame(left_join(cnty_modeled_vmt,acs_current,by='geoid'))
+rm(acs_current,county_dat_current,hh_census_vars,states,sbset)
 #
 # Get the county estimate of VMT and Autos from the EMFAC Emissions Inventory
 #

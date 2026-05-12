@@ -6,11 +6,11 @@ rm(list=ls())
 # read in the whole xlsx file
 #
 data_xls<-wb_load("./excel_files/data_prep.xlsx")
-acs_2023<- wb_read(data_xls,sheet='blkgrp_acs_2023')
-acs_2023<-as.data.frame(subset(acs_2023,acs_2023$geoid %like% '06%'))
+acs_current<- wb_read(data_xls,sheet='blkgrp_acs_current')
+acs_current<-as.data.frame(subset(acs_current,acs_current$geoid %like% '06%'))
 
-fitting_data<-as.data.frame(acs_2023$geoid)
-names(fitting_data)[names(fitting_data) == "acs_2023$geoid"]<-"geoid"
+fitting_data<-as.data.frame(acs_current$geoid)
+names(fitting_data)[names(fitting_data) == "acs_current$geoid"]<-"geoid"
 
 modeled_vmt<- wb_read(data_xls,sheet='vmt')
 modeled_vmt<-subset(modeled_vmt,select=c('geoid','normalized_vmt_per_hh'))

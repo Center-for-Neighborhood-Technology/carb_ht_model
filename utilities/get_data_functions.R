@@ -1,15 +1,19 @@
 #
+# get the current year(s) 
+#
+source("./utilities/current_years.R")
+#
 # this is a script that is a library of functions useful for data from various sources
 #
 get_acs_variable<-function(acs_geo,acs_var,var_name,ndx,yr,st,cnts){
   #
-  #
+  # example data might look like this
   #
   # acs_geo<-'block group'
   # acs_var<-'B25009_001'
   # var_name<-'households'
   # ndx<-'geoid'
-  # yr<-2023
+  # yr<-current_acs_year
   # st<-'06'
   # cnts<-mtc_counties$fipco
   #
@@ -66,15 +70,15 @@ get_county_acs<-function(hh_census_vars,states){
   #
   # get acs data
   #
-  county_dat_2023 <- get_acs(geography = "county", variables = hh_census_vars$acs_var,
-                             state =states, geometry = FALSE, year = 2023,output='wide')
-  acs_2023<-county_dat_2023[,c('GEOID',paste(hh_census_vars$acs_var,'E',sep=''))]
-  names(acs_2023)<-c('geoid',hh_census_vars$var_name)
+  county_dat_current <- get_acs(geography = "county", variables = hh_census_vars$acs_var,
+                             state =states, geometry = FALSE, year = current_acs_year,output='wide')
+  acs_current<-county_dat_current[,c('GEOID',paste(hh_census_vars$acs_var,'E',sep=''))]
+  names(acs_current)<-c('geoid',hh_census_vars$var_name)
 
-  names(acs_2023)
-  head(acs_2023)
+  names(acs_current)
+  head(acs_current)
   #
-  county_hh_data<-as.data.frame(acs_2023$geoid)
+  county_hh_data<-as.data.frame(acs_current$geoid)
   #
   # fill in the data
   #
@@ -101,27 +105,27 @@ get_cbsa_acs<-function(hh_census_vars,state){
   #
   # get acs data
   #
-  cbsa_dat_2023 <- get_acs(geography = "cbsa", variables = hh_census_vars$acs_var,
-                           geometry = FALSE, year = 2023)
-  names(cbsa_dat_2023)<-tolower(names(cbsa_dat_2023))
-  cbsa_dat_2023<-subset(cbsa_dat_2023,cbsa_dat_2023$geoid %in% cbsas)
-  acs_2023<-{}
-  acs_2023$geoid<-cbsas
-  names(cbsa_dat_2023)
+  cbsa_dat_current <- get_acs(geography = "cbsa", variables = hh_census_vars$acs_var,
+                           geometry = FALSE, year = current_acs_year)
+  names(cbsa_dat_current)<-tolower(names(cbsa_dat_current))
+  cbsa_dat_current<-subset(cbsa_dat_current,cbsa_dat_current$geoid %in% cbsas)
+  acs_current<-{}
+  acs_current$geoid<-cbsas
+  names(cbsa_dat_current)
   i<-2
   for(i in 1:length(hh_census_vars$acs_var)){
     #print(hh_census_vars$var_name[i])
-    sbset<-subset(cbsa_dat_2023,select=c('geoid','estimate'),cbsa_dat_2023$variable==hh_census_vars$acs_var[i])
+    sbset<-subset(cbsa_dat_current,select=c('geoid','estimate'),cbsa_dat_current$variable==hh_census_vars$acs_var[i])
     sbset$estimate[is.na(sbset$estimate)]<-''
     names(sbset)[names(sbset) == "estimate"] <-hh_census_vars$var_name[i]
-    acs_2023<-as.data.frame(merge(acs_2023,sbset,by='geoid'))
+    acs_current<-as.data.frame(merge(acs_current,sbset,by='geoid'))
   }
-  names(acs_2023)
-  acs_2023<-subset(acs_2023,acs_2023$geoid %in% cbsas)
-  head(acs_2023)
+  names(acs_current)
+  acs_current<-subset(acs_current,acs_current$geoid %in% cbsas)
+  head(acs_current)
   #
-  acs_hh_data<-as.data.frame(acs_2023$geoid)
-  names(acs_hh_data)[names(acs_hh_data) == "acs_2023$geoid"]<-"geoid"
+  acs_hh_data<-as.data.frame(acs_current$geoid)
+  names(acs_hh_data)[names(acs_hh_data) == "acs_current$geoid"]<-"geoid"
   acs_hh_data<-as.data.frame(subset(acs_hh_data,acs_hh_data$geoid %in% cbsas))
   #
   # fill in the data
@@ -142,15 +146,15 @@ get_state_acs<-function(hh_census_vars,state){
   #
   # get acs data
   #
-  state_dat_2023 <- get_acs(geography = "state", variables = hh_census_vars$acs_var,
-                            state =state,geometry = FALSE, year = 2023,output='wide')
-  acs_2023<-state_dat_2023[,c('GEOID',paste(hh_census_vars$acs_var,'E',sep=''))]
-  names(acs_2023)<-c('geoid',hh_census_vars$var_name)
-  rm(state_dat_2023)
-  names(acs_2023)
-  head(acs_2023)
+  state_dat_current <- get_acs(geography = "state", variables = hh_census_vars$acs_var,
+                            state =state,geometry = FALSE, year = current_acs_year,output='wide')
+  acs_current<-state_dat_current[,c('GEOID',paste(hh_census_vars$acs_var,'E',sep=''))]
+  names(acs_current)<-c('geoid',hh_census_vars$var_name)
+  rm(state_dat_current)
+  names(acs_current)
+  head(acs_current)
   #
-  acs_hh_data<-as.data.frame(acs_2023$geoid)
+  acs_hh_data<-as.data.frame(acs_current$geoid)
   names(acs_hh_data)[1]<-"geoid"
   #
   # fill in the data

@@ -2,6 +2,10 @@
 # clear all memory before starting
 #
 rm(list=ls())
+#
+# get the current year(s) 
+#
+source("./utilities/current_years.R")
 source("./utilities/get_data_functions.R")
 source("./utilities/overlaps_and_splits.R")
 source("./utilities/ploting_scripts.R")
@@ -26,36 +30,36 @@ blkgrps<-read_sf(dsn = gis_folder,
 #
 mtc_counties<-wb_read(pda_scenario,sheet='MTC_counties')
 #
-# read in 2023 block group acs households from census api
+# read in current_acs_year block group acs households from census api
 #
-blkgrp_hhs_2023 <- get_acs_variable('block group','B25009_001','households','geoid',2023,'06',mtc_counties$fipco)
-names(blkgrp_hhs_2023)<-c('geoid','hhs23')
+blkgrp_hhs_current <- get_acs_variable('block group','B25009_001','households','geoid',current_acs_year,'06',mtc_counties$fipco)
+names(blkgrp_hhs_current)<-c('geoid','hhs23')
 #
 # read in the jobs for the mtc counties
 #
-lodes_2022<-wb_read(data_prep,sheet='lodes_2022')
-names(lodes_2022)[2]<-'geoid'
-lodes_2022<-subset(lodes_2022,substring(lodes_2022$geoid,1,5) %in% paste('06',mtc_counties$fipco,sep=''))
-blkgrp_jobs_22<-as.data.frame(subset(lodes_2022, select=c('geoid','C000')))
+lodes_current<-wb_read(data_prep,sheet='lodes_current')
+names(lodes_current)[2]<-'geoid'
+lodes_current<-subset(lodes_current,substring(lodes_current$geoid,1,5) %in% paste('06',mtc_counties$fipco,sep=''))
+blkgrp_jobs_22<-as.data.frame(subset(lodes_current, select=c('geoid','C000')))
 names(blkgrp_jobs_22)<-c('geoid','jobs22')
 #
 # start building the projections
 #
-blkgrp_flat_prj<-merge(blkgrp_hhs_2023,blkgrp_jobs_22)
+blkgrp_flat_prj<-merge(blkgrp_hhs_current,blkgrp_jobs_22)
 names(blkgrp_flat_prj)
 #
-# allocate the 2023 households
+# allocate the current_acs_year households
 #
-tot_hhs_2023<-sum(blkgrp_flat_prj$hhs23) 
-tot_job_2022<-sum(blkgrp_flat_prj$jobs22)
+tot_hhs_current<-sum(blkgrp_flat_prj$hhs23) 
+tot_job_current<-sum(blkgrp_flat_prj$jobs22)
 #
 # from the bay area plan
 #
 total_hh_goal<-4043000
 total_job_goal<-5408000
 
-blkgrp_flat_prj$hhs50<-blkgrp_flat_prj$hhs23*total_hh_goal/tot_hhs_2023
-blkgrp_flat_prj$jobs50<-blkgrp_flat_prj$jobs22*total_job_goal/tot_job_2022
+blkgrp_flat_prj$hhs50<-blkgrp_flat_prj$hhs23*total_hh_goal/tot_hhs_current
+blkgrp_flat_prj$jobs50<-blkgrp_flat_prj$jobs22*total_job_goal/tot_job_current
 blkgrp_flat_prj<-merge(blkgrp_flat_prj,subset(st_drop_geometry(blkgrps),select=c('geoid','lacres')))
 head(blkgrp_flat_prj)
 #

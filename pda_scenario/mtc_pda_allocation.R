@@ -2,6 +2,10 @@
 # clear all memory before starting
 #
 rm(list=ls())
+#
+# get the current year(s) 
+#
+source("./utilities/current_years.R")
 source("./utilities/get_data_functions.R")
 source("./utilities/overlaps_and_splits.R")
 source("./utilities/ploting_scripts.R")
@@ -60,32 +64,32 @@ write_sf(agg_geom,paste(gis_folder,"agg_geom.gpkg",sep=''))
 #
 mtc_counties<-wb_read(pda_scenario,sheet='MTC_counties')
 #
-# read in 2023 block group acs households from census api
+# read in current_acs_year block group acs households from census api
 #
-blkgrp_hhs_2023 <- get_acs_variable('block group','B25009_001','households','geoid',2023,'06',mtc_counties$fipco)
-names(blkgrp_hhs_2023)[1]<-'geoid'
+blkgrp_hhs_current <- get_acs_variable('block group','B25009_001','households','geoid',current_acs_year,'06',mtc_counties$fipco)
+names(blkgrp_hhs_current)[1]<-'geoid'
 #
 # read in the jobs for the mtc counties
 #
-lodes_2022<-wb_read(data_prep,sheet='lodes_2022')
-names(lodes_2022)[2]<-'geoid'
-lodes_2022<-subset(lodes_2022,substring(lodes_2022$geoid,1,5) %in% paste('06',mtc_counties$fipco,sep=''))
-blkgrp_jobs_22<-subset(lodes_2022, select=c('geoid','C000'))
+lodes_current<-wb_read(data_prep,sheet='lodes_current')
+names(lodes_current)[2]<-'geoid'
+lodes_current<-subset(lodes_current,substring(lodes_current$geoid,1,5) %in% paste('06',mtc_counties$fipco,sep=''))
+blkgrp_jobs_22<-subset(lodes_current, select=c('geoid','C000'))
 names(blkgrp_jobs_22)[1]<-'geoid'
 #
-# allocate the 2023 households from blkgrps to agg_geom
+# allocate the current_acs_year households from blkgrps to agg_geom
 #
 agg_geom_hh <- sum_var_using_fractions(pda_scenario,'agg_geom','obj_id','blkgrps','geoid',
-                                              blkgrp_hhs_2023,'households')
+                                              blkgrp_hhs_current,'households')
 agg_geom_job<- sum_var_using_fractions(pda_scenario,'agg_geom','obj_id','blkgrps','geoid',
                                                 blkgrp_jobs_22,'C000')
 agg_geom_projections<-merge(agg_geom_hh,agg_geom_job,  by='obj_id', all=TRUE)
 names(agg_geom_projections)<-c('obj_id','hh23','jobs22')
 #
-# allocate the 2023 households from blkgrps to super districts
+# allocate the current_acs_year households from blkgrps to super districts
 #
 sdistricts_hh <- sum_var_using_fractions(pda_scenario,'sdistricts','suprdistid','blkgrps','geoid',
-                                               blkgrp_hhs_2023,'households')
+                                               blkgrp_hhs_current,'households')
 pda_scenario<-wb_load("./excel_files/pda_scenario.xlsx")
 sdistricts_job <- sum_var_using_fractions(pda_scenario,'sdistricts','suprdistid','blkgrps','geoid',
                                                   blkgrp_jobs_22,'C000')
@@ -104,7 +108,7 @@ head(sdistricts_allocation)
 sdistricts_projections<-merge(sdistricts_projections, sdistricts_allocation, by='suprdistid', all.x=TRUE, all.y=FALSE)
 head(sdistricts_projections)
 #
-# now pro rate the san francisco hhs and jobs using the 2023 numbers
+# now pro rate the san francisco hhs and jobs using the current_acs_year numbers
 #
 sum_sf_hh23<-sdistricts_projections$hh23[1]+sdistricts_projections$hh23[2]+sdistricts_projections$hh23[3]+sdistricts_projections$hh23[4]
 sum_sf_jobs22<-sdistricts_projections$jobs22[1]+sdistricts_projections$jobs22[2]+sdistricts_projections$jobs22[3]+sdistricts_projections$jobs22[4]
@@ -118,7 +122,7 @@ sum(sdistricts_projections$jobs2050[1:4])
 sum(sdistricts_projections$hh2050)
 sum(sdistricts_projections$jobs2050 )
 #
-# calculate ratio of 2023 hhs and 2022 jobs to super districts
+# calculate ratio of current_acs_year hhs and current_lodes_year jobs to super districts
 #
 sdistricts_projections$hh_rat<-sdistricts_projections$hh2050/sdistricts_projections$hh23
 sdistricts_projections$job_rat<-sdistricts_projections$jobs2050/sdistricts_projections$jobs22 
@@ -194,7 +198,7 @@ print(paste("Just checking in non-pdas job total =",tot_job_scale_sd,'and goal =
 #
 agg_projections <- rbind(sdist_projections, pdas_projections)
 #
-# calculate the ratio of 2023 hhs and 2022 jobs to 2050 hhs and jobs
+# calculate the ratio of current_acs_year hhs and current_lodes_year jobs to 2050 hhs and jobs
 #
 agg_projections$hhr_tot<-agg_projections$hh50_scale/agg_projections$hh23
 agg_projections$jobr_tot<-agg_projections$jobs50_scale/agg_projections$jobs22
@@ -217,7 +221,7 @@ head(agg_proj_geom)
 #
 # now get blkgrps ratios from agg_geos
 #
-blkgp_projections<-merge(blkgrp_hhs_2023,blkgrp_jobs_22)
+blkgp_projections<-merge(blkgrp_hhs_current,blkgrp_jobs_22)
 names(blkgp_projections)<-c('geoid','hhs23','jobs22')
 blkgp_hh50_ratio <- average_var_using_fractions(pda_scenario,'blkgrps','geoid','agg_geom','obj_id',
                                              agg_projections,'hhr_tot')
